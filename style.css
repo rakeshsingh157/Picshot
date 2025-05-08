@@ -1,0 +1,496 @@
+* {
+    margin-top: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+
+.editp{
+    display: inline-block;
+    padding: 0.5em 1.5em;
+    margin-top: 15px;
+    color: white;
+    font-size: clamp(12px, 1.3vw, 16px);
+    width: clamp(80px, 10vw, 160px);
+    height: clamp(25px, 4vw, 35px);
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(90deg, #465A31 30%, #FE9042);
+    transition: transform 0.3s ease;
+}
+
+/* Edit Profile Button Styles */
+.edit-button {
+    display: inline-block;
+    padding: 0.5em 1.5em;
+    margin-top: 15px;
+    color: white;
+    font-size: clamp(12px, 1.3vw, 16px);
+    width: clamp(100px, 10vw, 160px);
+    height: clamp(25px, 4vw, 35px);
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(90deg, #465A31 30%, #FE9042);
+    transition: transform 0.3s ease;
+}
+
+.edit-button:hover {
+    background-color: #45a049;
+}
+
+/* Modal (Edit Profile Form) Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4); /* Black with opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%; /* Adjust based on your preference */
+    border-radius: 8px;
+}
+
+/* Close Button for Modal */
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+}
+
+/* Form Input Styles */
+input[type="text"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+
+/* Save Changes Button Styles */
+.save-button {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.save-button:hover {
+    background-color: #45a049;
+}
+
+/* Style for the Plus Button */
+.plus-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #ff4747;
+    color: white;
+    font-size: 30px;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.plus-button:hover {
+    transform: scale(1.1);
+}
+
+/* Optional: Style for the upload section */
+.add-post-section {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    z-index: 998;
+    display: none;
+    width: 300px;
+}
+
+
+.profile-wrapper {
+    width: 100%;
+    max-width: 2000px;
+    margin: 20px auto;
+    position: relative;
+    padding: 0 20px; /* Added some padding to ensure no elements stick to the edges */
+}
+
+.uppertop {
+    width: 100%;  /* Ensure it takes full width within the container */
+    height: auto;
+    min-height: 150px;
+    aspect-ratio: 7/1;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.uppertop img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.profilepic {
+    width: 18vw;
+    max-width: 160px;
+    min-width: 110px;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    border: 7px solid white;
+    position: absolute;
+    bottom: -5vw;
+    left: 13%;
+    transform: translateX(-50%);
+    overflow: hidden;
+    background-color: #eee;
+}
+
+.profilepic img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-name {
+    position: absolute;
+    left: calc(20% - 5vw + 90px);
+    margin-top: 5px;
+    color: #000;
+    font-family: 'Montserrat', sans-serif;
+    text-align: left;
+}
+
+.username-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.username {
+    font-size: clamp(18px, 2.5vw, 30px);
+    font-weight: 700;
+}
+
+.verified-icon {
+    width: clamp(20px, 1.8vw, 32px);
+    height: auto;
+}
+
+.desc {
+    font-size: clamp(12px, 1.3vw, 16px);
+    font-weight: 400;
+    color: #444;
+    margin-top: 4px;
+    display: block;
+}
+
+.follow-button, .contact-button {
+    display: inline-block;
+    padding: 0.5em 1.5em;
+    margin-top: 15px;
+    color: white;
+    font-size: clamp(12px, 1.3vw, 16px);
+    width: clamp(80px, 8vw, 160px);
+    height: clamp(25px, 4vw, 35px);
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(90deg, #465A31 30%, #FE9042);
+    transition: transform 0.3s ease;
+}
+
+.follow-button:hover, .contact-button:hover {
+    transform: scale(1.05);
+}
+
+.nav-post {
+    display: flex;
+    list-style: none;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 0px;
+    margin-top: 15px;
+    font-weight: 1;
+    position: absolute;
+    left: clamp(10px, 4vw, 120px);
+    top: clamp(350px, 4vw, 400px);
+    font-size: clamp(12px, 1.5vw, 18px);
+    z-index: 1000;
+    border-radius: 8px;
+}
+
+.nav-post li {
+    cursor: pointer;
+    position: relative;
+    padding-bottom: 4px;
+    transition: color 0.3s ease;
+}
+
+.nav-post li button {
+    cursor: pointer;
+    position: relative;
+    padding-bottom: 4px;
+    transition: color 0.3s ease;
+    all: unset;
+}
+
+.nav-post li:hover {
+    color: #ff4747;
+}
+
+.nav-post li::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background-color: #ff4747;
+    transition: width 0.3s ease-in-out;
+}
+
+.nav-post li:hover::after {
+    width: 100%;
+}
+
+.add-post-section {
+    text-align: center;
+    
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.add-post-section input[type="file"],
+.add-post-section input[type="text"] {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 250px;
+    color: #333;
+}
+
+.add-post-section button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-top: 10px;
+    color: white;
+    background-color: #465A31;
+    border: none;
+    border-radius: 15px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.add-post-section button:hover {
+    transform: scale(1.05);
+}
+
+.post-grid-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+    padding: 20px;
+    max-width: 1490px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    background-color: #F2F2F2;
+    border-radius: 20px;
+    position: relative;
+    top: clamp(160px, 4vw, 400px);
+}
+
+.post-card {
+    background-color: #e0e0e0;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    width: 100%; /* Make the card width responsive */
+    height: 100%; /* Make the height 100% of the available space */
+    max-width: 300px; /* Set max width to maintain the card's size */
+    max-height: 400px; /* Set max height */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 18px rgba(128, 128, 128, 0.15);
+}
+
+.post-card img {
+    width: 100%; /* Adjust to fill the width of the card */
+    height: 100%; /* Adjust to fill the height of the card */
+    display: block;
+    object-fit: cover;
+}
+
+.post-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 10px 15px;
+    width: 100%; /* Make overlay take full width of the card */
+    height: 100%; /* Make overlay take full height */
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+    color: #fff;
+}
+
+.post-username {
+    font-size: clamp(12px, 1.5vw, 18px);
+    margin-top: 2px;
+}
+
+.post-desc {
+    font-size: clamp(20px, 1.5vw, 18px);
+    opacity: 0.9;
+}
+.edit-cover {
+    position: absolute;
+    left: 90%;
+    
+   display: flex;
+    margin-top: 10px;
+    
+    
+    font-size: clamp(2px, 1.5vw, 18px);
+    color: #333;
+    margin-right: 30px;
+}
+
+.edit-cover img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+@media (max-width: 600px) {
+    .profile-name {
+        left: calc(15% - 5vw + 90px);
+    }
+    .nav-post {
+        padding: 10px 20px;
+        font-size: 15px;
+        top: clamp(300px, 4vw, 400px);
+    }
+    .profilepic {
+        width: 18vw;
+        max-width: 160px;
+        min-width: 110px;
+        aspect-ratio: 1/1;
+        border-radius: 50%;
+        border: 7px solid white;
+        position: absolute;
+        bottom: -5vw;
+        left: 18%;
+        bottom: -110px;
+        transform: translateX(-50%);
+        overflow: hidden;
+        background-color: #eee;
+    }
+    .post-grid-box {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        padding: 20px;
+        max-width: 1380px;
+        margin: 0 auto;
+        box-sizing: border-box;
+        background-color: #F2F2F2;
+        border-radius: 50px;
+        position: relative;
+        top: clamp(160px, 4vw, 400px);
+    }
+    .edit-cover {
+        left: 80%; /* Adjust position on smaller screens */
+        font-size: 2px; /* Reduce font size */
+        display: flex;
+        margin-top: -5px;
+        transform: scale();/* Adjust right margin */
+    }
+
+    .edit-cover img {
+        width: 18px; /* Reduce image size */
+        height: 18px; /* Reduce image size */
+    }
+}
+@media (max-width: 768px) {
+    .edit-cover {
+        left: 80%; /* Adjust position on smaller screens */
+        font-size: 12px; /* Reduce font size */
+        margin-right: 20px; 
+        margin-top: -5px;
+        display: inline-block;/* Adjust right margin */
+    }
+
+    .edit-cover img {
+        width: 18px; /* Reduce image size */
+        height: 18px; /* Reduce image size */
+    }
+}
+
+@media (max-width: 480px) {
+    .edit-cover {
+        left: 75%; /* Adjust position further for very small screens */
+        font-size: 10px; /* Further reduce font size */
+        margin-right: 10px;
+        margin-top: -10px;
+        transform: scale(0.8); /* Adjust right margin */
+    }
+
+    .edit-cover img {
+        width: 16px; /* Further reduce image size */
+        height: 16px; /* Further reduce image size */
+    }
+}
