@@ -34,7 +34,7 @@ body {
     background-color: #bd2130; /* Even darker shade when active */
 }
 
-.editp{
+.editp , .editUsernameSubmit{
     display: inline-block;
     padding: 0.5em 1.5em;
     margin-top: 15px;

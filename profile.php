@@ -253,7 +253,7 @@ $posts = getPosts($conn, 1); //For now its hardcoded.
                 <input type="text" name="newUsername" id="newUsername" value="<?=$userData['username']?>" required><br><br>
                 <label for="newDescription">New Description:</label>
                 <textarea name="newDescription" id="newDescription" required><?=$userData['description']?></textarea><br><br>
-                <button type="submit" name="editUsernameSubmit">Save Changes</button>
+                <button type="submit" name="editUsernameSubmit" class="editUsernameSubmit">Save Changes</button>
             </form>
         </div>
     </div>
