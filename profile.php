@@ -157,6 +157,59 @@ $posts = getPosts($conn, 1); //For now its hardcoded.
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Document</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* Full screen modal styles */
+        .fullscreen-modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); /* Dark background */
+            overflow: auto;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fullscreen-modal-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 95%;
+            max-height: 95%;
+        }
+
+        .fullscreen-image {
+            max-width: 100%;
+            max-height: 90%; /* Leave some space for caption/close button */
+            object-fit: contain;
+        }
+
+        .fullscreen-caption {
+            color: white;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .close-fullscreen {
+            color: white;
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .close-fullscreen:hover {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
 
@@ -221,18 +274,28 @@ $posts = getPosts($conn, 1); //For now its hardcoded.
 
     <div class="post-grid-box" id="postGrid">
         <?php foreach ($posts as $post): ?>
-            <div class="post-card">
+            <div class="post-card" onclick="openFullscreen('<?=$post['photo_url']?>', '<?=$post['caption']?>')">
                 <img src="<?=$post['photo_url']?>" alt="User Post">
                 <div class="post-overlay">
                     <div class="post-desc"><?=$post['caption'] ?? 'No Caption'?></div>
                     <div class="post-username">@<?=$post['username']?></div>
-                    <form method="post">
+                    <form method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
                         <input type="hidden" name="delete_post_id" value="<?=$post['id']?>">
-                        <button type="submit" class="delete-button">Delete</button>
+                        <button type="submit" class="delete-button">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </form>
                 </div>
             </div>
         <?php endforeach; ?>
+    </div>
+
+    <div id="fullscreenModal" class="fullscreen-modal" onclick="closeFullscreen()">
+        <span class="close-fullscreen">&times;</span>
+        <div class="fullscreen-modal-content">
+            <img id="fullscreenImage" class="fullscreen-image">
+            <div id="fullscreenCaption" class="fullscreen-caption"></div>
+        </div>
     </div>
 
     <button class="plus-button" onclick="toggleUpload()">+</button>
@@ -318,12 +381,29 @@ $posts = getPosts($conn, 1); //For now its hardcoded.
             document.getElementById("editModal").style.display = "none";
         }
 
-        // Close the modal if the user clicks outside of it
+        // Close the edit modal if the user clicks outside of it
         window.onclick = function(event) {
             const modal = document.getElementById("editModal");
             if (event.target == modal) {
                 modal.style.display = "none";
             }
+        }
+
+        // Function to open the full screen modal
+        function openFullscreen(imageUrl, caption) {
+            const fullscreenModal = document.getElementById('fullscreenModal');
+            const fullscreenImage = document.getElementById('fullscreenImage');
+            const fullscreenCaption = document.getElementById('fullscreenCaption');
+
+            fullscreenImage.src = imageUrl;
+            fullscreenCaption.textContent = caption;
+            fullscreenModal.style.display = 'flex';
+        }
+
+        // Function to close the full screen modal
+        function closeFullscreen() {
+            const fullscreenModal = document.getElementById('fullscreenModal');
+            fullscreenModal.style.display = 'none';
         }
     </script>
 </body>
