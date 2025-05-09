@@ -1,7 +1,5 @@
 <?php
 session_start();
-// ini_set('display_errors', 1); // Enable error display
-// error_reporting(E_ALL); // Report all types of errors
 
 // ✅ Database config
 $servername = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com";
@@ -42,35 +40,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Process Profile Photo Upload
     if (isset($_FILES['profilePhoto']) && $_FILES['profilePhoto']['error'] === 0) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
         $profilePhotoUrl = uploadToImgBB($_FILES['profilePhoto']);
         if ($profilePhotoUrl) {
             $stmt = $conn->prepare("UPDATE users SET profile_photo = ? WHERE id = ?");
             $stmt->bind_param("si", $profilePhotoUrl, $userId);
             $stmt->execute();
-            echo '<script>document.getElementById("upload-loader").style.display = "none";</script>';
-        } else {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Failed to upload profile picture.");</script>';
         }
     }
 
     // Process Cover Photo Upload
     if (isset($_FILES['coverInput']) && $_FILES['coverInput']['error'] === 0) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
         $coverPhotoUrl = uploadToImgBB($_FILES['coverInput']);
         if ($coverPhotoUrl) {
             $stmt = $conn->prepare("UPDATE users SET cover_photo = ? WHERE id = ?");
             $stmt->bind_param("si", $coverPhotoUrl, $userId);
             $stmt->execute();
-            echo '<script>document.getElementById("upload-loader").style.display = "none";</script>';
-        } else {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Failed to upload cover photo.");</script>';
         }
     }
 
     // Process Post Image Upload
     if (isset($_FILES['imageInput']) && $_FILES['imageInput']['error'] === 0) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
         $postPhotoUrl = uploadToImgBB($_FILES['imageInput']);
         $postDescription = $_POST['descInput'] ?? '';
 
@@ -78,15 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("INSERT INTO posts (user_id, photo_url, caption) VALUES (?, ?, ?)");
             $stmt->bind_param("iss", $userId, $postPhotoUrl, $postDescription);
             $stmt->execute();
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; window.location.reload();</script>';
-        } else {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Failed to upload post.");</script>';
         }
     }
 
     // Edit username and description
     if (isset($_POST['editUsernameSubmit']) && isset($_POST['newUsername']) && isset($_POST['newDescription'])) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
         $newUsername = $_POST['newUsername'];
         $newDescription = $_POST['newDescription'];
 
@@ -96,28 +81,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $checkResult = $checkStmt->get_result();
 
         if ($checkResult->num_rows > 0) {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Username already exists. Please choose a different one.");</script>';
+            echo "<script>alert('Username already exists. Please choose a different one.');</script>";
         } else {
             $stmt = $conn->prepare("UPDATE users SET username = ?, description = ? WHERE id = ?");
             $stmt->bind_param("ssi", $newUsername, $newDescription, $userId);
             $stmt->execute();
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Profile updated successfully!"); window.location.reload();</script>';
+            echo "<script>alert('Profile updated successfully!'); window.location.reload();</script>";
         }
         $checkStmt->close();
     }
 
     // Delete Post
     if (isset($_POST['delete_post_id'])) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
         $deletePostId = $_POST['delete_post_id'];
         $stmt = $conn->prepare("DELETE FROM posts WHERE id = ? AND user_id = ?");
         $stmt->bind_param("ii", $deletePostId, $userId);
         $stmt->execute();
 
         if ($stmt->affected_rows > 0) {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Post deleted successfully!"); window.location.href = window.location.href;</script>';
+            echo "<script>alert('Post deleted successfully!'); window.location.href = window.location.href;</script>";
         } else {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Failed to delete post. Please try again.");</script>';
+            echo "<script>alert('Failed to delete post. Please try again.');</script>";
         }
         $stmt->close();
     }
@@ -166,38 +150,6 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        /* Loading Overlay Styles */
-        #upload-loader {
-            display: none; /* Hidden by default */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-            z-index: 1000; /* Ensure it's on top */
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            color: white;
-            font-size: 1.2em;
-        }
-
-        .spinner {
-            border: 8px solid #f3f3f3; /* Light grey border */
-            border-top: 8px solid #3498db; /* Blue top border */
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 2s linear infinite;
-            margin-bottom: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
         /* Full screen modal styles */
         .fullscreen-modal {
             display: none;
@@ -303,7 +255,7 @@ if (isset($_SESSION['user_id'])) {
     </ul>
 
     <div class="add-post-section" id="uploadBox" style="display: none;">
-        <form method="POST" enctype="multipart/form-data" onsubmit="document.getElementById('upload-loader').style.display = 'flex';">
+        <form method="POST" enctype="multipart/form-data">
             <label for="imageInput">Upload an image:</label>
             <input type="file" name="imageInput" id="imageInput" accept="image/*" required><br>
             <input type="text" name="descInput" id="descInput" placeholder="Enter description" required><br>
@@ -338,9 +290,6 @@ if (isset($_SESSION['user_id'])) {
     </div>
 
     <button class="plus-button" onclick="toggleUpload()">+</button>
-    <div id="upload-loader" style="display: none;">
-        <div class="spinner"></div>
-    </div>
 
     <script>
         function toggleUpload() {
@@ -366,21 +315,18 @@ if (isset($_SESSION['user_id'])) {
                 const formData = new FormData();
                 formData.append('profilePhoto', file);
 
-                document.getElementById('upload-loader').style.display = 'flex'; // Show loader
                 fetch('', {
                     method: 'POST',
                     body: formData
                 })
                 .then(response => response.text())
                 .then(data => {
-                    console.log('Profile picture upload successful:', data);
+                    console.log('Upload successful:', data);
                     profileImage.src = e.target.result;
-                    document.getElementById('upload-loader').style.display = 'none'; // Hide loader
                 })
                 .catch(error => {
                     console.error('Error uploading profile picture:', error);
                     alert('Failed to upload profile picture. Please try again.');
-                    document.getElementById('upload-loader').style.display = 'none'; // Hide loader on error
                 });
             };
             reader.readAsDataURL(file);
@@ -400,7 +346,6 @@ if (isset($_SESSION['user_id'])) {
                 const formData = new FormData();
                 formData.append('coverInput', file);
 
-                document.getElementById('upload-loader').style.display = 'flex'; // Show loader
                 fetch('', {
                     method: 'POST',
                     body: formData
@@ -408,26 +353,26 @@ if (isset($_SESSION['user_id'])) {
                 .then(response => response.text())
                 .then(data => {
                     console.log('Cover upload successful:', data);
-                    document.getElementById('upload-loader').style.display = 'none'; // Hide loader
                 })
                 .catch(error => {
                     console.error('Error uploading cover image:', error);
                     alert('Failed to upload cover image. Please try again.');
-                    document.getElementById('upload-loader').style.display = 'none'; // Hide loader on error
                 });
             };
             reader.readAsDataURL(file);
         });
 
-        // Edit profile modal open/close
+        // Function to open the edit profile modal
         function openEditModal() {
             document.getElementById("editModal").style.display = "block";
         }
 
+        // Function to close the edit profile modal
         function closeEditModal() {
             document.getElementById("editModal").style.display = "none";
         }
 
+        // Close the edit modal if the user clicks outside of it
         window.onclick = function(event) {
             const modal = document.getElementById("editModal");
             if (event.target == modal) {
@@ -435,6 +380,7 @@ if (isset($_SESSION['user_id'])) {
             }
         }
 
+        // Function to open the full screen modal
         function openFullscreen(imageUrl, caption) {
             const fullscreenModal = document.getElementById('fullscreenModal');
             const fullscreenImage = document.getElementById('fullscreenImage');
@@ -445,13 +391,11 @@ if (isset($_SESSION['user_id'])) {
             fullscreenModal.style.display = 'flex';
         }
 
+        // Function to close the full screen modal
         function closeFullscreen() {
             const fullscreenModal = document.getElementById('fullscreenModal');
             fullscreenModal.style.display = 'none';
         }
     </script>
-    <div id="upload-loader" style="display: none;">
-        <div class="spinner"></div>
-    </div>
 </body>
 </html>

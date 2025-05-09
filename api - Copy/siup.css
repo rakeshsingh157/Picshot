@@ -1,3 +1,4 @@
+/* 🧼 Reset & Basics */
 * {
     margin: 0;
     padding: 0;
@@ -17,36 +18,8 @@
     justify-content: center;
     padding: 20px;
   }
-  #upload-loader {
-    display: none; /* Hidden by default */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-    z-index: 1000; /* Ensure it's on top */
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    color: white;
-    font-size: 1.2em;
-}
-
-.spinner {
-    border: 8px solid #f3f3f3; /* Light grey border */
-    border-top: 8px solid #3498db; /* Blue top border */
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 2s linear infinite;
-    margin-bottom: 10px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+  
+  /* 🧩 Container */
   .container {
     width: 100%;
     max-width: 1200px;
@@ -56,14 +29,23 @@
     display: flex;
     height: 550px;
     width: 100%;
-    max-width: 1200px;
     background: white;
     border-radius: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     overflow: hidden;
   }
   
+  /* ✅ SIGN-UP FORM LEFT SIDE */
   .card-left {
+    width: 50%;
+    padding: 50px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  /* ✅ IMAGE RIGHT SIDE */
+  .card-right {
     width: 50%;
     position: relative;
     display: flex;
@@ -75,7 +57,7 @@
     width: 100%;
     height: 100%;
     background: url('photo.jpg') no-repeat center center/cover;
-    border-radius: 40px 40px 40px 40px;
+    border-radius: 40px;
     position: relative;
     display: flex;
     align-items: center;
@@ -87,7 +69,7 @@
     content: "";
     position: absolute;
     top: 0;
-   bottom: 0;
+    bottom: 0;
     left: 0;
     right: 0;
     border: 10px solid white;
@@ -104,15 +86,7 @@
     text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.6);
   }
   
-  .card-right {
-    width: 50%;
-    
-    padding: 50px 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  
+  /* 💫 Form & Buttons */
   .brand {
     font-size: 1.4rem;
     font-weight: 600;
@@ -123,7 +97,7 @@
     font-weight: 700;
   }
   
-  .card-right h2 {
+  .card-left h2 {
     margin-bottom: 25px;
     color: #000;
   }
@@ -163,23 +137,18 @@
     color: #333;
   }
   
-  .bottom-text a {
-    color: #FE9042;
-    text-decoration: none;
-  }
-  
-  /* 📱 Mobile responsive styles */
+  /* 📱 Responsive */
   @media (max-width: 768px) {
     .card {
       flex-direction: column;
       height: auto;
     }
   
-    .card-left {
+    .card-right {
       display: none;
     }
   
-    .card-right {
+    .card-left {
       width: 100%;
       padding: 30px 20px;
       text-align: center;
@@ -189,7 +158,7 @@
       font-size: 1.2rem;
     }
   
-    .card-right h2 {
+    .card-left h2 {
       font-size: 1.5rem;
       margin-bottom: 20px;
     }
@@ -208,3 +177,4 @@
       font-size: 0.85rem;
     }
   }
+  
