@@ -22,7 +22,7 @@ function getUserInfoByUsername($conn, $username) {
 }
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../index.php');
+    header('Location: ./index.php');
     exit;
 }
 
@@ -84,12 +84,13 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             $align = $isMe ? 'right' : 'left';
             $bgColor = $isMe ? '#CDDCBE' : '#f0f0f0';
             $color = $isMe ? '#717171' : '#465A31';
+            $border = $isMe ? '8px 0px 15px 8px' : '0px 8px 8px 15px';
             $photoUrl = htmlspecialchars($message['sender_photo']);
 
             $output .= "<div style='text-align: $align; margin-bottom: 12px; display: flex; align-items: flex-start; flex-direction: " . ($isMe ? 'row-reverse' : 'row') . ";'>";
-            $output .= "<img src='$photoUrl' alt='Profile' style='width: 30px; height: 30px; border-radius: 50%; margin-" . ($isMe ? 'left' : 'right') . ": 8px;'>";
+            $output .= "<img src='$photoUrl' alt='Profile' style='width: 30px; height: 30px; border-radius: 50% ; margin-" . ($isMe ? 'left' : 'right') . ": 8px;'>";
             $output .= "<div>";
-            $output .= "<span style='display: inline-block; background-color: $bgColor; color: $color; padding: 8px 12px; max-width: 50vw; word-wrap: break-word; border-radius: 8px;'>";
+            $output .= "<span style='display: inline-block; background-color: $bgColor; color: $color; padding: 8px 12px; max-width: 50vw; margin-top:2px; word-wrap: break-word; border-radius:$border;'>";
             $output .= htmlspecialchars($message['message']);
             $output .= "</span><br><small style='color: gray;'>{$message['sent_at']}</small>";
             $output .= "</div></div>";
@@ -105,10 +106,15 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  
     <meta charset="UTF-8">
-    <title>Chat with <?= htmlspecialchars($_GET['username'] ?? 'User') ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Chat with <?= htmlspecialchars($_GET['username'] ?? 'User') ?></title>
+   
     <link rel="stylesheet" href="chat-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
  
     
@@ -117,7 +123,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
 <body>
     <aside id="sidebar">
         <h1>Chat</h1>
-        <div id="user-list">
+        <center><div id="user-list">
             <?php
             $currentUserId = $_SESSION['user_id'];
             $stmt = $conn->prepare("SELECT DISTINCT u.id, u.username, u.profile_photo
@@ -138,7 +144,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             }
 
             $stmt->close();
-            ?>
+            ?></center>
         </div>
     </aside>
 
@@ -165,7 +171,10 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
 
         <div id="input-area">
             <input type="text" id="message-input" placeholder="Type your message...">
-            <button id="send-button" onclick="sendMessage()">Send</button>
+            <button id="send-button" onclick="sendMessage()">
+  <i class="fas fa-paper-plane"></i>
+</button>
+
         </div>
         <input type="hidden" id="receiver-username" value="<?= htmlspecialchars($_GET['username'] ?? '') ?>">
     </div>
