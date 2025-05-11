@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<link rel="stylesheet" href="chat-style.css">
+
+<body>
+      <aside id="sidebar">
+        <h1>Chat</h1>
+        <div id="user-list">
+            <?php
+            $currentUserId = $_SESSION['user_id'];
+            $stmt = $conn->prepare("SELECT DISTINCT u.id, u.username, u.profile_photo
+                                        FROM users u
+                                        JOIN messages m ON (u.id = m.sender_id OR u.id = m.receiver_id)
+                                        WHERE u.id != ? AND (m.sender_id = ? OR m.receiver_id = ?)");
+            $stmt->bind_param("iii", $currentUserId, $currentUserId, $currentUserId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            while ($row = $result->fetch_assoc()) {
+                $username = htmlspecialchars($row['username']);
+                $profilePhotoUrl = htmlspecialchars($row['profile_photo']);
+                echo "<a class='user-item' href='?username=$username'>
+                            <img src='$profilePhotoUrl' alt='Profile Photo'>
+                            <span>$username</span>
+                        </a>";
+            }
+
+            $stmt->close();
+            ?>
+        </div>
+    </aside>
+
+    <div id="chat-container">
+        <div id="chat-header">
+            <?php
+            $receiverUsername = $_GET['username'] ?? '';
+            if ($receiverUsername) {
+                $receiverInfo = getUserInfoByUsername($conn, $receiverUsername);
+                if ($receiverInfo) {
+                    $profilePhotoUrl = htmlspecialchars($receiverInfo['profile_photo']);
+                    echo "<img src='$profilePhotoUrl' alt='Profile Photo'>";
+                    echo "<h2>" . htmlspecialchars($receiverUsername) . "</h2>";
+                } else {
+                    echo "<p>User not found.</p>";
+                }
+            }
+            ?>
+        </div>
+
+        <div id="message-area">
+            <center><p>Loading messages...</p></center>
+        </div>
+
+        <div id="input-area">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button id="send-button" onclick="sendMessage()">Send</button>
+        </div>
+        <input type="hidden" id="receiver-username" value="<?= htmlspecialchars($_GET['username'] ?? '') ?>">
+    </div>
+
+</body>
+</html>

@@ -88,12 +88,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['editUsernameSubmit']) && isset($_POST['newUsername']) && isset($_POST['newDescription'])) {
         echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
         $newUsername = $_POST['newUsername'];
-        $newDescription = $_POST['newDescription'];
+        $newDescription = substr($_POST['newDescription'], 0, 150); // ⛔ 150 characters max
+
 
         $checkStmt = $conn->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
         $checkStmt->bind_param("si", $newUsername, $userId);
         $checkStmt->execute();
         $checkResult = $checkStmt->get_result();
+
+
+        if (strlen($_POST['newDescription']) > 150) {
+    echo '<script>alert("Description must be 150 characters or less."); window.history.back();</script>';
+    exit();
+}
+        if (strlen($newUsername) < 3 || strlen($newUsername) > 20) {
+            echo '<script>alert("Username must be between 3 and 20 characters."); window.history.back();</script>';
+            exit();
+        }
 
         if ($checkResult->num_rows > 0) {
             echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Username already exists. Please choose a different one.");</script>';
@@ -254,9 +265,13 @@ if (isset($_SESSION['user_id'])) {
 
     <center>
         <div class="profile-wrapper">
-            <div class="uppertop">
-                <img src="<?=$userData['cover_photo'] ?? 'topimage.jpg'?>" alt="demo image">
-            </div>
+           <div class="uppertop" id="coverContainer">
+    <img src="<?=$userData['cover_photo'] ?? 'topimage.jpg'?>" alt="Cover Image" id="coverPhoto" style="cursor: pointer;">
+</div>
+
+<div class="edit-cover" id="editCover">
+    <input type="file" id="coverInput" name="coverInput" accept="image/*" style="display: none;">
+</div>
 
             <div class="profilepic">
                 <img src="<?=$userData['profile_photo'] ?? 'profile.jpg'?>" alt="Profile" id="profilePhoto" style="cursor: pointer;">
@@ -299,7 +314,7 @@ if (isset($_SESSION['user_id'])) {
 
     <ul class="nav-post">
         <li><button onclick="toggleUpload()">Post</button></li>
-        <li><button onclick="">Drafts</button></li>
+       
     </ul>
 
     <div class="add-post-section" id="uploadBox" style="display: none;">
@@ -343,6 +358,45 @@ if (isset($_SESSION['user_id'])) {
     </div>
 
     <script>
+
+            // Make the cover photo clickable
+document.getElementById('coverContainer').addEventListener('click', function() {
+    document.getElementById('coverInput').click();  // Trigger the file input
+});
+
+// Handle the file input change (i.e., when a new image is selected)
+document.getElementById('coverInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];  // Get the selected file
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Update the cover photo with the selected image
+            document.getElementById('coverPhoto').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        // Optionally, send the file to the server (via AJAX or a form submission)
+        uploadCoverPhoto(file);
+    }
+});
+
+// Function to upload the cover photo (to be implemented in PHP)
+function uploadCoverPhoto(file) {
+    const formData = new FormData();
+    formData.append('cover_photo', file);
+
+    fetch('upload_cover_photo.php', {
+        method: 'POST',
+        body: formData
+    }).then(response => response.json())
+      .then(data => {
+        // Handle the response from the server (e.g., show success message)
+        console.log(data);
+      })
+      .catch(error => console.error('Error:', error));
+}
+
+
         function toggleUpload() {
             const uploadBox = document.getElementById("uploadBox");
             uploadBox.style.display = uploadBox.style.display === "none" ? "block" : "none";

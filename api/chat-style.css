@@ -1,0 +1,365 @@
+/* --- Base Styles --- */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f8f9fa;
+    display: flex; /* Enable flexbox for overall layout */
+}
+
+/* --- Sidebar Styles --- */
+#sidebar {
+    width: 280px; /* Slightly wider sidebar */
+    background-color: #fff; /* White sidebar background */
+    border-right: 1px solid #e0e0e0; /* Lighter border */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+#sidebar h1 {
+    color: #333; /* Darker heading text */
+    margin-bottom: 25px;
+    text-align: left; /* Align heading to the left */
+    font-size: 1.8em; /* Slightly larger heading */
+    font-weight: 600; /* Semi-bold heading */
+}
+
+#user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Increased gap between user items */
+    padding-top: 10px; /* Add some space below the heading */
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    text-decoration: none;
+    color: #333;
+    border-radius: 8px; /* More rounded corners */
+    transition: background-color 0.15s ease-in-out;
+}
+
+.user-item:hover {
+    background-color: #f0f0f0; /* Slightly darker hover background */
+}
+
+.user-item img {
+    width: 36px; /* Slightly larger profile photos */
+    height: 36px;
+    border-radius: 50%;
+    margin-right: 12px;
+    object-fit: cover;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); /* Subtle photo shadow */
+}
+
+.user-item span {
+    flex-grow: 1;
+    font-weight: 500; /* Slightly bolder username */
+}
+
+/* --- Chat Container Styles --- */
+#chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: calc(100vw - 310px); /* Adjust for the wider sidebar */
+    max-width: calc(100vw - 310px);
+    background: #fff;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05); /* Subtle shadow on the left */
+    margin-left: 310px; /* Push to the right of the wider sidebar */
+}
+
+/* Chat header */
+#chat-header {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px; /* Increased horizontal padding */
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f9f9f9; /* Light gray header background */
+}
+
+#chat-header img {
+    width: 48px; /* Slightly larger header profile photo */
+    height: 48px;
+    border-radius: 50%;
+    margin-right: 18px;
+    object-fit: cover;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+#chat-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.6em; /* Slightly larger header text */
+    font-weight: 600;
+}
+
+/* Message area */
+#message-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px 25px; /* Increased horizontal padding */
+    background-color: #f8f8f8; /* Slightly lighter background */
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: thin; /* For Firefox */
+    /* Fallback for WebKit-based browsers */
+    
+    /* Removed scrollbar-color for better browser compatibility */
+}
+
+#message-area::-webkit-scrollbar {
+    width: 10px; /* Slightly wider scrollbar */
+}
+
+#message-area::-webkit-scrollbar-thumb {
+    background-color: #a0a0a0; /* Darker scrollbar thumb */
+    border-radius: 5px;
+    border: 2px solid #f8f8f8; /* Add some border */
+}
+
+#message-area::-webkit-scrollbar-thumb:hover {
+    background-color: #808080; /* Darker hover state */
+}
+
+/* Input area */
+#input-area {
+    display: flex;
+    gap: 12px;
+    padding: 15px 25px; /* Increased horizontal padding */
+    background-color: #fff;
+    border-top: 1px solid #e0e0e0;
+}
+
+#message-input {
+    flex-grow: 1;
+    padding: 12px 16px;
+    border: 1px solid #c0c0c0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.2s ease-in-out;
+}
+
+#message-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.25);
+}
+
+#send-button {
+    padding: 12px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    font-weight: 500;
+}
+
+#send-button:hover {
+    background-color: #0056b3;
+}
+
+/* Messages */
+.message-container {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 18px; /* Increased margin between messages */
+    word-break: break-word;
+    max-width: 80%;
+}
+
+.sent-message {
+    flex-direction: row-reverse;
+    align-self: flex-end;
+}
+
+.sent-message .message-body {
+    background-color: #dcf8c6;
+    color: #333;
+    border-radius: 10px; /* More rounded sent messages */
+}
+
+.received-message {
+    flex-direction: row;
+    align-self: flex-start;
+}
+
+.received-message .message-body {
+    background-color: #f0f0f0;
+    color: #333;
+    border-radius: 10px; /* More rounded received messages */
+}
+
+.message-body {
+    display: inline-block;
+    padding: 12px 16px;
+    border-radius: 10px;
+    max-width: 100%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); /* Subtle message shadow */
+}
+
+.message-timestamp {
+    color: #777; /* Slightly darker timestamp */
+    font-size: 0.85em;
+    margin-top: 5px;
+}
+
+.profile-photo {
+    width: 36px; /* Consistent profile photo size in messages */
+    height: 36px;
+    border-radius: 50%;
+    margin-right: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sent-message .profile-photo {
+    margin-left: 12px;
+    margin-right: 0;
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.no-messages {
+    text-align: center;
+    color: #777;
+    padding: 20px;
+    font-style: italic;
+}
+/* --- Media Query for Smaller Screens --- */
+@media screen and (max-width: 768px) {
+    body {
+        flex-direction: column; /* Stack elements */
+    }
+
+    #sidebar {
+        /* Consider making the sidebar a top bar or a slide-in menu */
+        position: fixed; /* Or absolute */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: auto; /* Adjust height as needed */
+        background-color: #fff;
+        border-bottom: 1px solid #e0e0e0;
+        z-index: 20; /* Ensure it's above the chat container */
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        overflow-x: auto; /* If user list is horizontal */
+        white-space: nowrap; /* Prevent wrapping of user items */
+    }
+
+    #sidebar h1 {
+        margin: 0;
+        font-size: 1.4em;
+    }
+
+    #user-list {
+        display: flex;
+        flex-direction: row; /* Display users horizontally */
+        gap: 8px;
+        margin-left: auto; /* Push to the right if heading is present */
+    }
+
+    .user-item {
+        flex-direction: column;
+        align-items: center;
+        padding: 8px;
+        font-size: 0.8em;
+    }
+
+    .user-item img {
+        width: 30px;
+        height: 30px;
+        margin-right: 0;
+        margin-bottom: 5px;
+    }
+
+    #chat-container {
+        width: 100vw;
+        /* Calculate height to fill the screen below the potential mobile sidebar/header and input area */
+        height: calc(100vh - /* Height of mobile sidebar */ - /* Height of chat header */ - /* Height of input area */);
+        margin-left: 0; /* No left margin */
+        box-shadow: none;
+        margin-top: auto; /* Push to the bottom if sidebar is at the top */
+    }
+
+    #chat-header {
+        padding: 12px 18px;
+    }
+
+    #chat-header h2 {
+        font-size: 1.2em;
+    }
+
+    #message-area {
+        padding: 15px;
+        width: 100vw;
+    }
+
+    .message-container {
+        max-width: 95%;
+    }
+
+    .sent-message,
+    .received-message {
+        max-width: 95%;
+    }
+
+    .message-body {
+        padding: 10px 14px;
+        font-size: 0.9em;
+    }
+
+    .profile-photo {
+        width: 30px;
+        height: 30px;
+        margin-bottom: 3px;
+    }
+
+    .sent-message .profile-photo {
+        margin-left: 8px;
+        margin-right: 0;
+    }
+
+    #input-area {
+        flex-direction: row;
+        padding: 10px 15px;
+        gap: 8px;
+        
+    }
+
+   #message-input {
+    flex-grow: none;
+    font-size: 14px;
+    padding: 12px 14px; /* Normal left-right padding */
+    
+     /* Ensures padding doesn't overflow */
+}
+
+    #send-button {
+        font-size: 14px;
+        padding: 10px 16px;
+    }
+}

@@ -53,7 +53,7 @@ body {
     display: inline-block;
     padding: 0.5em 1.5em;
     margin-top: 15px;
-    color: white;
+    color: rgb(255, 255, 255);
     font-size: clamp(12px, 1.3vw, 16px);
     width: clamp(100px, 10vw, 160px);
     height: clamp(25px, 4vw, 35px);
@@ -490,12 +490,26 @@ textarea:focus {
     }
 }
 @media (max-width: 768px) {
+    .editp , .editUsernameSubmit{
+    display: inline-block;
+    padding: 0.5em 1.5em;
+    margin-top: 15px;
+    color: white;
+    font-size: clamp(12px, 1.3vw, 16px);
+    width: clamp(130px, 10vw, 160px);
+    height: clamp(30px, 4vw, 35px);
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(90deg, #465A31 30%, #FE9042);
+    transition: transform 0.3s ease;
+}
+    
     .edit-cover {
-        left: 80%; /* Adjust position on smaller screens */
+         /* Adjust position on smaller screens */
         font-size: 12px; /* Reduce font size */
         margin-right: 20px; 
-        margin-top: -5px;
-        display: inline-block;/* Adjust right margin */
+        margin-top: 5px;
+        display: none;/* Adjust right margin */
     }
 
     .edit-cover img {
@@ -506,7 +520,7 @@ textarea:focus {
 
 @media (max-width: 480px) {
     .edit-cover {
-        left: 75%; /* Adjust position further for very small screens */
+         /* Adjust position further for very small screens */
         font-size: 10px; /* Further reduce font size */
         margin-right: 10px;
         margin-top: -10px;
