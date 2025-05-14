@@ -2,10 +2,10 @@
 session_start();
 
 // DB Connection
-$host = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com"; // ya 127.0.0.1
-$username = "admin"; // aapka username
-$password = "DBpicshot"; // aapka password
-$database = "Photostore"; // database ka naam
+$host = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com"; 
+$username = "admin";
+$password = "DBpicshot"; 
+$database = "Photostore"; 
 
 $conn = new mysqli($host, $username, $password, $database);
 if ($conn->connect_error) {

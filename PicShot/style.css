@@ -174,7 +174,11 @@ textarea:focus {
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     z-index: 998;
     display: none;
-    width: 300px;
+
+    /* Add these properties: */
+    width: 80%;           /* or any percentage you like */
+    max-width: 600px;     /* cap it at a reasonable maximum */
+    box-sizing: border-box; /* include padding in the width calculation */
 }
 
 
@@ -324,42 +328,6 @@ textarea:focus {
     width: 100%;
 }
 
-.add-post-section {
-    text-align: center;
-    
-    padding: 10px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.add-post-section input[type="file"],
-.add-post-section input[type="text"] {
-    display: inline-block;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    width: 250px;
-    color: #333;
-}
-
-.add-post-section button {
-    display: inline-block;
-    padding: 10px 20px;
-    margin-top: 10px;
-    color: white;
-    background-color: #465A31;
-    border: none;
-    border-radius: 15px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.add-post-section button:hover {
-    transform: scale(1.05);
-}
 
 .post-grid-box {
     display: grid;

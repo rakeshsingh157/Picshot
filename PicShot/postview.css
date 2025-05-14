@@ -1,0 +1,88 @@
+ *{box-sizing:border-box;}
+    body{margin:0;font-family:'Poppins',sans-serif;background:#eaeaea;color:#333;padding:40px 10px;}
+    .outer-card{position:relative;max-width:1100px;margin:auto;background:#fff;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,0.1);padding:30px;}
+    .container{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start;}
+    .image-section{flex:1 1 400px;}
+    .post-image{width:100%;max-width:500px;height:auto;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,0.15);margin-bottom:10px;}
+    .details-section{flex:1 1 350px;}
+    .details-section h2{margin-top:0;font-size:24px;}
+    .username{color:#666;font-size:14px;margin:8px 0;}
+    .description{font-size:16px;margin-top:12px;color:#444;}
+      .comment-box {
+        position: absolute; /* ✅ correct spelling */
+  bottom: 40px;
+      display: flex;
+      margin-top: 24px;
+      gap: 10px;
+    }
+
+    .comment-box input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #ccc;
+      border-radius: 30px;
+      font-size: 14px;
+      width: 400px;
+    }
+
+    .comment-box button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(to right, #465A31, #FE9042);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .comment-box button:hover {
+      background: linear-gradient(to right, #3e4f28, #e2782e);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .comment-box {
+        flex-direction: column;
+        
+      }
+       .comment-box input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #ccc;
+      border-radius: 30px;
+      font-size: 14px;
+      width: 280px;
+    }
+
+      .comment-box button {
+        width: 100%;
+      }
+    }
+    .comment-box button:hover{background:linear-gradient(to right,#3e4f28,#e2782e);}
+    .comment{margin-top:15px;padding:10px;background:#f9f9f9;border-radius:5px;border:1px solid #ddd;}
+    .comment p{margin:5px 0;color:#444;}
+    .comment small{font-size:12px;color:#888;}
+    /* Comments container ko fixed height aur scrollable banao */
+.comments-container {
+  max-height: 300px;       /* height adjust kar sakte ho as per design */
+  overflow-y: auto;
+  padding-right: 10px;     /* scrollbar ke liye thoda gap */
+  margin-bottom: 20px;
+}
+
+/* Scrollbar styling optional */
+.comments-container::-webkit-scrollbar {
+  width: 6px;
+}
+.comments-container::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+
+    @media(max-width:768px){.container{flex-direction:column;align-items:center;} .comment-box{flex-direction:column;} .comment-box input{width:100%;}}
+  

@@ -14,7 +14,10 @@ if ($conn->connect_error) {
 }
 
 function getUserInfoByUsername($conn, $username) {
-    $stmt = $conn->prepare("SELECT id, profile_photo FROM users WHERE username = ?");
+    $stmt = $conn->prepare("SELECT u.id, u.username, u.profile_photo, g.is_verified
+                            FROM users u
+                            LEFT JOIN goldentik g ON u.id = g.user_id
+                            WHERE u.username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -26,7 +29,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Sending Message
+// Sending Message...
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_username'], $_POST['message'])) {
     $senderId = $_SESSION['user_id'];
     $receiverUsername = trim($_POST['receiver_username']);
@@ -106,19 +109,11 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>Chat with <?= htmlspecialchars($_GET['username'] ?? 'User') ?></title>
-   
     <link rel="stylesheet" href="chat-style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
- 
-    
-    </style>
 </head>
 <body>
     <aside id="sidebar">
@@ -126,8 +121,9 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
         <center><div id="user-list">
             <?php
             $currentUserId = $_SESSION['user_id'];
-            $stmt = $conn->prepare("SELECT DISTINCT u.id, u.username, u.profile_photo
+            $stmt = $conn->prepare("SELECT DISTINCT u.id, u.username, u.profile_photo, g.is_verified
                                         FROM users u
+                                        LEFT JOIN goldentik g ON u.id = g.user_id
                                         JOIN messages m ON (u.id = m.sender_id OR u.id = m.receiver_id)
                                         WHERE u.id != ? AND (m.sender_id = ? OR m.receiver_id = ?)");
             $stmt->bind_param("iii", $currentUserId, $currentUserId, $currentUserId);
@@ -137,9 +133,10 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             while ($row = $result->fetch_assoc()) {
                 $username = htmlspecialchars($row['username']);
                 $profilePhotoUrl = htmlspecialchars($row['profile_photo']);
+                $isVerified = $row['is_verified'] ? " <img src='vf.png' alt='Verified' style='width: 20px; height: 20px;'>" : "";
                 echo "<a class='user-item' href='?username=$username'>
                             <img src='$profilePhotoUrl' alt='Profile Photo'>
-                            <span>$username</span>
+                            <span>$username $isVerified</span>
                         </a>";
             }
 
@@ -156,8 +153,10 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                 $receiverInfo = getUserInfoByUsername($conn, $receiverUsername);
                 if ($receiverInfo) {
                     $profilePhotoUrl = htmlspecialchars($receiverInfo['profile_photo']);
+                    $isVerified = $receiverInfo['is_verified'] ? "<img src='vf.png' alt='Verified' style='width: 20px; height: 20px;'>" : "";
+
                     echo "<img src='$profilePhotoUrl' alt='Profile Photo'>";
-                    echo "<h2>" . htmlspecialchars($receiverUsername) . "</h2>";
+                    echo "<h2>" . htmlspecialchars($receiverUsername) . " $isVerified</h2>";
                 } else {
                     echo "<p>User not found.</p>";
                 }
@@ -172,9 +171,8 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
         <div id="input-area">
             <input type="text" id="message-input" placeholder="Type your message...">
             <button id="send-button" onclick="sendMessage()">
-  <i class="fas fa-paper-plane"></i>
-</button>
-
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
         <input type="hidden" id="receiver-username" value="<?= htmlspecialchars($_GET['username'] ?? '') ?>">
     </div>
@@ -183,71 +181,96 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
         const messageArea = document.getElementById('message-area');
         const receiverUsernameInput = document.getElementById('receiver-username');
         const messageInput = document.getElementById('message-input');
-        let isUserScrolling = false;
-        let scrollTimeout;
+        // Optionally, store your own profile photo for optimistic message
+        const myProfilePhoto = <?= json_encode($_SESSION['profile_photo'] ?? 'default.png') ?>;
 
-        messageArea.addEventListener('scroll', () => {
-            isUserScrolling = true;
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                isUserScrolling = false;
-            }, 200);
-        });
+        function escapeHtml(text) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
 
         function loadMessages() {
             const receiverUsername = receiverUsernameInput.value;
             if (receiverUsername) {
-                const currentScrollTop = messageArea.scrollTop;
-                const isScrolledToBottom = (messageArea.scrollHeight - messageArea.clientHeight) <= currentScrollTop + 1;
-
                 fetch(`?messages_only=true&username=${receiverUsername}`)
                     .then(res => res.text())
-                    .then(html => {
-                        messageArea.innerHTML = html;
-                        if (!isUserScrolling && isScrolledToBottom) {
-                            messageArea.scrollTop = messageArea.scrollHeight;
-                        } else if (!isUserScrolling) {
-                            messageArea.scrollTop = currentScrollTop;
-                        }
+                    .then(data => {
+                        messageArea.innerHTML = data;
+                        messageArea.scrollTop = messageArea.scrollHeight; // Scroll to the bottom
                     });
-            } else {
-                messageArea.innerHTML = "<center><p>No recipient selected.</p></center>";
             }
         }
 
         function sendMessage() {
-            const receiverUsername = receiverUsernameInput.value;
             const message = messageInput.value.trim();
+            if (message) {
+                const receiverUsername = receiverUsernameInput.value;
 
-            if (receiverUsername && message) {
-                const formData = new URLSearchParams();
-                formData.append('receiver_username', receiverUsername);
-                formData.append('message', message);
+                // --- Optimistic UI update: Add message instantly ---
+                const align = 'right';
+                const bgColor = '#CDDCBE';
+                const color = '#717171';
+                const border = '8px 0px 15px 8px';
+                const now = new Date();
+                const sentAt = now.getHours().toString().padStart(2, '0') + ':' +
+                               now.getMinutes().toString().padStart(2, '0');
 
+                const optimisticMsg = `
+                    <div style='text-align: ${align}; margin-bottom: 12px; display: flex; align-items: flex-start; flex-direction: row-reverse;'>
+                        <div>
+                            <span style='display: inline-block; background-color: ${bgColor}; color: ${color}; padding: 8px 12px; max-width: 50vw; margin-top:2px; word-wrap: break-word; border-radius:${border};'>
+                                ${escapeHtml(message)}
+                            </span><br>
+                            <small style='color: gray;'>${sentAt} (sending...)</small>
+                        </div>
+                    </div>
+                `;
+
+                messageArea.innerHTML += optimisticMsg;
+                messageArea.scrollTop = messageArea.scrollHeight;
+
+                // Clear the input field instantly
+                messageInput.value = '';
+
+                // --- Send to server in background ---
                 fetch('', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: formData
+                    body: new URLSearchParams({
+                        receiver_username: receiverUsername,
+                        message: message
+                    })
                 })
                 .then(res => res.json())
-                .then(data => {
-                    if (!data.success) {
-                        alert('Message failed: ' + (data.error || 'Unknown error.'));
+                .then(response => {
+                    if (!response.success) {
+                        alert(response.error);
+                        // Remove the optimistic message by reloading messages
+                        loadMessages();
+                    } else {
+                        // Replace optimistic message with real one (with correct time)
+                        loadMessages();
                     }
                 });
-                messageInput.value = '';
-            } else {
-                alert('Please type a message and select user.');
             }
         }
 
+        // Load messages when the page loads
         loadMessages();
-        setInterval(loadMessages, 1000);
 
-        messageInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') sendMessage();
+        // Auto-refresh messages every 1 second for smooth chat
+        setInterval(loadMessages, 100);
+
+        // Optional: Send message on Enter key
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
         });
     </script>
 </body>

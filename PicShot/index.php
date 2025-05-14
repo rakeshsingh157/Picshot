@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       <div class="card-right">
         <h2><span class="brand">Pic<span class="highlight">Shot</span></span><br>Access your account</h2>
 
-        <!-- ✅ Login form starts here -->
+        <!-- Login form starts here -->
         <form method="POST" action="">
           <input type="text" name="username" placeholder="Enter your username" required />
           <input type="password" name="password" placeholder="Enter your password" required />

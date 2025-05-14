@@ -1,5 +1,39 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+$user_id = intval($_SESSION['user_id']);
+
+$conn = new mysqli(
+    "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com",
+    "admin", "DBpicshot", "Photostore"
+);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Handle comment submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
+    $post_id = intval($_POST['post_id']);
+    $comment = trim($_POST['comment']);
+    if ($comment !== '') {
+        $ins = $conn->prepare(
+            "INSERT INTO comments (post_id, user_id, comment) VALUES (?, ?, ?)"
+        );
+        $ins->bind_param("iis", $post_id, $user_id, $comment);
+        if (!$ins->execute()) {
+            die("Insert error: " . $ins->error);
+        }
+        $ins->close();
+    }
+}?>
+
+
+
+
+<?php
 
 // --- Configuration ---
 $dbConfig = [
@@ -199,7 +233,95 @@ if ($viewingUserId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title><?=htmlspecialchars($userData['username'] ?? 'User Profile')?></title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="postview.css">
     <style>
+        #postModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      overflow: auto;
+      padding: 40px 10px;
+    }
+
+    #postModalContent {
+     
+      margin: auto;
+      padding:  30px;
+      width: 80%;
+      max-width: 1000px;
+      border-radius: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    #postModalContent button.close-btn {
+      position: absolute;
+      top: 0px;
+      right:0px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+ .outer-card{position:relative;max-width:1100px;margin:auto;background:#fff;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,0.1);padding:30px;}
+   
+    .comment-box
+{
+    position: absolute;
+    bottom:0;
+    padding-bottom:20px;
+    margin-top: 900px;
+}
+.comment-box input {
+  flex: 1;
+  padding: 14px 20px;
+  border: 1px solid #ccc;
+  border-radius: 30px;
+  font-size: 15px;
+  width: 100%;
+  max-width: 450px;
+  transition: border-color 0.3s ease;
+}
+
+.comment-box input:focus {
+  border-color: #465A31;
+  outline: none;
+  box-shadow: 0 0 5px rgba(70, 90, 49, 0.5);
+}
+
+.comment-box button {
+  padding: 14px 24px;
+  margin-top:-4px;
+  border: none;
+  border-radius: 30px;
+  background: linear-gradient(to right, #465A31, #FE9042);
+  color: white;
+  font-weight: 600;
+  height: 50px;
+  margin-top:10px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.comment-box button:hover {
+  background: linear-gradient(to right, #3e4f28, #e2782e);
+  
+}
+
+.comment-box button:active {
+  transform: scale(0.95);
+}
+
+
+
+
         .edit-cover {
             display: <?= $isOwnProfile ? 'block' : 'none' ?>;
         }
@@ -270,22 +392,131 @@ if ($viewingUserId) {
     <?php endif; ?>
 
     <div class="post-grid-box" id="postGrid">
-        <?php foreach ($posts as $post): ?>
-            <div class="post-card">
-                <img src="<?= htmlspecialchars($post['photo_url']) ?>" alt="User Post">
-                <div class="post-overlay">
-                    <div class="post-desc"><?= htmlspecialchars($post['caption'] ?? 'No Caption') ?></div>
-                    <div class="post-username">@<?= htmlspecialchars($post['username']) ?></div>
-                    <?php if ($isOwnProfile): ?>
-                        <form method="post">
-                            <input type="hidden" name="delete_post_id" value="<?= htmlspecialchars($post['id']) ?>">
-                            <button type="submit" class="delete-button">Delete</button>
-                        </form>
-                    <?php endif; ?>
-                </div>
+    <?php foreach ($posts as $post): ?>
+        <div class="post-card" onclick="openPostModal(<?= $post['id'] ?>)">
+            <img src="<?= htmlspecialchars($post['photo_url']) ?>" alt="User Post">
+            <div class="post-overlay">
+                <div class="post-desc"><?= htmlspecialchars($post['caption'] ?? 'No Caption') ?></div>
+                <div class="post-username">@<?= htmlspecialchars($post['username']) ?></div>
+
+                <form method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                    <input type="hidden" name="delete_post_id" value="<?= $post['id'] ?>">
+                    <button type="submit" class="delete-button">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
             </div>
-        <?php endforeach; ?>
-    </div>
+        </div>
+
+        <!-- Hidden form to redirect -->
+        <form id="postForm-<?= $post['id'] ?>" action="photovs.php" method="POST" style="display: none;">
+            <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
+        </form>
+    <?php endforeach; ?>
+</div>
+<!-- Loading Screen -->
+
+<style>
+#loadingOverlay {
+  display: none; /* Hidden by default */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+}
+
+#loadingOverlay.active {
+  display: flex;
+}
+
+.spinner {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+</style>
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+</div>
+
+<div id="postModal" style="display: none;">
+  <div id="postModalContent" >
+    <button class="close-btn" onclick="closePostModal()">
+      <i class="fa-solid fa-x"></i>
+    </button>
+    <!-- Post detail will be dynamically loaded here via JS -->
+  </div>
+</div>
+
+<script>
+function openPostModal(postId) {
+  const modal = document.getElementById('postModal');
+  const content = document.getElementById('postModalContent');
+  const loader = document.getElementById('loadingOverlay');
+
+  // Add close on outside click here (better than inline HTML)
+  modal.onclick = function(event) {
+    if (event.target === modal) {
+      closePostModal();
+    }
+  };
+
+  loader.classList.add('active'); // Show loading
+
+  fetch('photovs.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'post_id=' + postId
+  })
+  .then(response => response.text())
+  .then(data => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(data, 'text/html');
+    const innerContent = doc.querySelector('.outer-card');
+
+    if (innerContent) {
+      content.innerHTML = `
+        <button class="close-btn" onclick="closePostModal()">X</button>
+        ${innerContent.outerHTML}
+      `;
+      modal.style.display = 'block';
+    } else {
+      alert('Post content not found.');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Failed to load post.');
+  })
+  .finally(() => {
+    loader.classList.remove('active'); // Hide loading
+  });
+}
+
+
+  function closePostModal()
+  {
+    const modal = document.getElementById('postModal');
+    const content = document.getElementById('postModalContent');
+    modal.style.display = 'none';
+    content.innerHTML = `<button class="close-btn" onclick="closePostModal()">X</button>`;
+  }
+</script>
 
     <?php if ($isOwnProfile): ?>
         <button class="plus-button" onclick="toggleUpload()">+</button>
