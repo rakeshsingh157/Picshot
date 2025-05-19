@@ -90,7 +90,7 @@
       resize: none;
     }
 
-    button {
+   button:not(.an-btn){
       margin-top: 20px;
       padding: 10px 20px;
       border: none;

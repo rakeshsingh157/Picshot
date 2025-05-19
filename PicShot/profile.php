@@ -236,355 +236,97 @@ if (isset($_SESSION['user_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Document</title>
     <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="prof.css">
+<link rel="stylesheet" href="sidebar.css">  <!-- Last mein -->
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        /* Loading Overlay Styles */
-        #upload-loader {
-            display: none; /* Hidden by default */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-            z-index: 1000; /* Ensure it's on top */
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            color: white;
-            font-size: 1.2em;
-        }
+   
 
-        .spinner {
-            border: 8px solid #f3f3f3; /* Light grey border */
-            border-top: 8px solid #3498db; /* Blue top border */
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 2s linear infinite;
-            margin-bottom: 10px;
-        }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
 
-        /* Full screen modal styles */
-        .fullscreen-modal {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9); /* Dark background */
-            overflow: auto;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .fullscreen-modal-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            max-width: 95%;
-            max-height: 95%;
-        }
-
-        .fullscreen-image {
-            max-width: 100%;
-            max-height: 90%; /* Leave some space for caption/close button */
-            object-fit: contain;
-        }
-
-        .fullscreen-caption {
-            color: white;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .close-fullscreen {
-            color: white;
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            font-size: 30px;
-            font-weight: bold;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.3s ease;
-        }
-
-        .close-fullscreen:hover {
-            opacity: 1;
-        }
-        .add-post-section {
-  position: fixed;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-  z-index: 998;
-  display: none;
-
-  /* Responsive width */
-  width: 90%;         /* nearly full on small screens */
-  max-width: 1000px;   /* but no more than 500px on large */
-  box-sizing: border-box;
-}
-@media (min-width: 600px) {
-  .add-post-section {
-    max-width: 600px;
-  }
-}
-@media (min-width: 900px) {
-  .add-post-section {
-    max-width: 800px;
-  }
+   <style>
+     /* Sidebar buttons ke liye specific style */
+.sidebg #sidebar button.an-btn {
+    color: black !important;
+    background-color: white !important;
 }
 
 
-
-
-    #postModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 9999;
-      overflow: auto;
-      padding: 40px 10px;
-    }
-
-    #postModalContent {
-     
-      margin: auto;
-      padding:  30px;
-      width: 80%;
-      max-width: 1000px;
-      border-radius: 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      position: relative;
-    }
-
-    #postModalContent button.close-btn {
-      position: absolute;
-      top: 0px;
-      right:0px;
-      background: red;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      
-      gap: 40px;
-      align-items: flex-start;
-    }
-
-    .image-section {
-      flex: 1 1 400px;
-    }
-
-    .post-image {
-      width: 100%;
-      max-width: 500px;
-      height: auto;
-      float: left;
-      border-radius: 16px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-      margin-bottom: 10px;
-    }
-
-    .details-section {
-      flex: 1 1 350px;
-      float: right;
-    }
-
-    .details-section h2 {
-      margin-top: 0;
-      font-size: 24px;
-    }
-
-    .username {
-      color: #666;
-      font-size: 14px;
-      margin: 8px 0;
-    }
-
-    .description {
-      font-size: 16px;
-      margin-top: 12px;
-      color: #444;
-    }
-
-.comments-container {
-  max-height: 300px;
-  overflow-y: auto;
-  padding-right: 12px;
-  margin-bottom: 24px;
-  
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-}
-
-/* Webkit scrollbar styling */
-.comments-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.comments-container::-webkit-scrollbar-track {
  
-  border-radius: 8px;
+.maingrap{
+ width:95%;
+ float:right;
 }
 
-.comments-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 8px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-  transition: background-color 0.3s ease;
-}
+</style>
 
-.comments-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.4);
-}
 
-.comment {
-  margin-top: 15px;
-  padding: 14px 16px;
-  
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: background-color 0.3s ease;
-}
-
-.comment:hover {
-  background-color: #f0f0f0;
-}
-
-.comment p {
-  margin: 5px 0;
-  color: #333;
-  font-size: 15px;
-  line-height: 1.4;
-}
-
-.comment small {
-  font-size: 12px;
-  color: #999;
-}
-
-.comment-box {
-  display: flex;
-  gap: 12px;
-  margin-top: 28px;
-  align-items: center;
-}
-
-.comment-box input {
-  flex: 1;
-  padding: 14px 20px;
-  border: 1px solid #ccc;
-  border-radius: 30px;
-  font-size: 15px;
-  width: 100%;
-  max-width: 450px;
-  transition: border-color 0.3s ease;
-}
-
-.comment-box input:focus {
-  border-color: #465A31;
-  outline: none;
-  box-shadow: 0 0 5px rgba(70, 90, 49, 0.5);
-}
-
-.comment-box button {
-  padding: 14px 24px;
-  margin-top:-4px;
-  border: none;
-  border-radius: 30px;
-  background: linear-gradient(to right, #465A31, #FE9042);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.comment-box button:hover {
-  background: linear-gradient(to right, #3e4f28, #e2782e);
-  
-}
-
-.comment-box button:active {
-  transform: scale(0.95);
-}
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-     #postModalContent button.close-btn {
-      display: none;
-    }
-    .details-section {
-        margin-top: -100px;
-      flex: 1 1 350px;
-      float: right;
-    }
-    
-  .comment-box {
-    flex-direction: column;
-  }
-
-  .comment-box input {
-    width: 100%;
-    border-radius: 10px;
-  }
-
-  .comment-box button {
-    width: 100%;
-    border-radius: 10px;
-  }
-}
-
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .comment-box {
-        flex-direction: column;
-      }
-
-      .comment-box input {
-        width: 100%;
-      }
-
-      .comment-box button {
-        width: 100%;
-      }
-    }
-
-    </style>
 </head>
 <body>
 
+
+
+<div class="sidebg">
+          <nav id="sidebar">
+            <ul type="none">
+                <li class="active"> 
+                    
+                <a>
+                    <button onclick="window.location.href='home_pages.php'" title="Home" class="an-btn">
+                           
+                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5"/>
+                            </svg>
+                        </button>
+                </a>
+                </li>
+                <li class="active">
+                    <a >
+                        <button onclick="window.location.href='home_pages.php'" title="upload" class="an-btn" >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                            </svg>
+                        </button>
+                    </a>
+                </li>
+                <li class="active">
+                    <a >
+                        <button onclick="window.location.href='home_pages.php'" title="Messages" class="an-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M16 8c0 3.866-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7M5 8a1 1 0 1 0-2 0 1 1 0 0 0 2 0m4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                            </svg>
+                        </button>
+                    </a>
+                </li>
+                <li class="active">
+                    <a >
+                        <button onclick="window.location.href='home_pages.php'" title="Profile" class="an-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                            </svg>
+                        </button>
+                    </a>
+                </li>
+                </ul> 
+                </nav>
+                </div>
+
+
+
+
+
+
+
+<div class="maingrap">
     <center>
+
+
+
+
+
+
+
         <div class="profile-wrapper">
            <div class="uppertop" id="coverContainer">
     <img src="<?=$userData['cover_photo'] ?? 'topimage.jpg'?>" alt="Cover Image" id="coverPhoto" style="cursor: pointer;">
@@ -920,7 +662,7 @@ $conn->close();
     <!-- Post detail will be dynamically loaded here via JS -->
   </div>
 </div>
-
+</div>
 <script>
 function openPostModal(postId) {
   const modal = document.getElementById('postModal');

@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['imageUrl'])) {
 
 $conn->close();
 ?>
+<?php include "sidebar.html";?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,6 +72,9 @@ $conn->close();
   </style>
 </head>
 <body>
+  
+
+
   <div class="container">
     <h2>Create New Post</h2>
     <div class="form-container">

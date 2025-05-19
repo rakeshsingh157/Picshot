@@ -105,7 +105,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
     exit;
 }
 ?>
-
+<?php include "sidebar.html";?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -116,6 +116,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <div class="wrap">
     <aside id="sidebar">
         <h1>Chat</h1>
         <center><div id="user-list">
@@ -144,8 +145,10 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             ?></center>
         </div>
     </aside>
-
+            <div style="width:200px;"></div>
     <div id="chat-container">
+              
+            
         <div id="chat-header">
             <?php
             $receiverUsername = $_GET['username'] ?? '';
@@ -163,6 +166,9 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             }
             ?>
         </div>
+
+
+       
 
         <div id="message-area">
             <center><p>Loading messages...</p></center>
@@ -272,6 +278,6 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                 sendMessage();
             }
         });
-    </script>
+    </script></div>
 </body>
 </html>
