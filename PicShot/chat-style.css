@@ -3,6 +3,7 @@ body, html {
     margin: 0;
     padding: 0;
     height: 100%;
+    width: 100%;
     font-family: 'Inter', Arial, sans-serif;
     background: linear-gradient(135deg, #f8f9fa 60%, #e6eaf3 100%);
     display: flex;

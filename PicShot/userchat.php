@@ -145,7 +145,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             ?></center>
         </div>
     </aside>
-            <div style="width:200px;"></div>
+            <div style="width:50px;"></div>
     <div id="chat-container">
               
             

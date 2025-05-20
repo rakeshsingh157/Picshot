@@ -287,7 +287,7 @@ textarea:focus {
     margin-top: 15px;
     font-weight: 1;
     position: absolute;
-    left: clamp(10px, 4vw, 120px);
+    left: clamp(200px, 4vw, 120px);
     top: clamp(350px, 4vw, 400px);
     font-size: clamp(12px, 1.5vw, 18px);
     z-index: 1000;
@@ -316,6 +316,7 @@ textarea:focus {
 .nav-post li::after {
     content: "";
     position: absolute;
+    
     bottom: 0;
     left: 0;
     height: 2px;

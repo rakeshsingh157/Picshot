@@ -237,7 +237,8 @@ if (isset($_SESSION['user_id'])) {
     <title>Document</title>
     <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="prof.css">
-<link rel="stylesheet" href="sidebar.css">  <!-- Last mein -->
+<link rel="stylesheet" href="sidebar.css">  
+ <link rel="stylesheet" href="post.css" /> <!-- Last mein -->
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
    
@@ -258,65 +259,11 @@ if (isset($_SESSION['user_id'])) {
  float:right;
 }
 
+
 </style>
 
 
-</head>
-<body>
-
-
-
-<div class="sidebg">
-          <nav id="sidebar">
-            <ul type="none">
-                <li class="active"> 
-                    
-                <a>
-                    <button onclick="window.location.href='home_pages.php'" title="Home" class="an-btn">
-                           
-                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5"/>
-                            </svg>
-                        </button>
-                </a>
-                </li>
-                <li class="active">
-                    <a >
-                        <button onclick="window.location.href='home_pages.php'" title="upload" class="an-btn" >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
-                            </svg>
-                        </button>
-                    </a>
-                </li>
-                <li class="active">
-                    <a >
-                        <button onclick="window.location.href='home_pages.php'" title="Messages" class="an-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M16 8c0 3.866-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7M5 8a1 1 0 1 0-2 0 1 1 0 0 0 2 0m4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
-                            </svg>
-                        </button>
-                    </a>
-                </li>
-                <li class="active">
-                    <a >
-                        <button onclick="window.location.href='home_pages.php'" title="Profile" class="an-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
-                                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
-                            </svg>
-                        </button>
-                    </a>
-                </li>
-                </ul> 
-                </nav>
-                </div>
-
-
-
-
-
-
+<?php include "sidebar.html";?>
 
 <div class="maingrap">
     <center>
@@ -425,13 +372,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['imageUrl'])) {
 
 $conn->close();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Create New Post</title>
-  <link rel="stylesheet" href="post.css" />
+
+ 
   <style>
     /* Loader Styles */
     #loader {
@@ -460,8 +402,7 @@ $conn->close();
  width:100%;max-width:500px;height:auto;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,0.15);margin-bottom:10px;
 }
   </style>
-</head>
-<body>
+
   <div class="container">
     <h2>Create New Post</h2>
     <div class="form-container">

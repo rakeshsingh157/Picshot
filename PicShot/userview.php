@@ -1,5 +1,20 @@
 <?php
 session_start();
+ob_start();
+
+$username = $_GET['username'] ?? '';
+$sessionUsername = $_SESSION['username'] ?? '';
+
+if (strtolower($sessionUsername) === strtolower($username)) {
+    header("Location: profile.php");
+    exit();
+}
+
+ob_end_flush();
+?>
+
+<?php
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit;
@@ -28,13 +43,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
         }
         $ins->close();
     }
+
+    $username = $_GET['username'] ?? '';
+var_dump($_SESSION['username'] ?? null, $username); // Avoid warning using null coalescing operator
+
+if (isset($_SESSION['username']) && $_SESSION['username'] === $username) {
+    header("Location: profile.php");
+    exit();
+}
 }?>
 
 
 
 
-<?php
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<?php
 // --- Configuration ---
 $dbConfig = [
     'servername' => "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com",
@@ -226,6 +267,7 @@ if ($viewingUserId) {
 }
 ?>
 
+<?php include "sidebar.html" ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -234,7 +276,13 @@ if ($viewingUserId) {
     <title><?=htmlspecialchars($userData['username'] ?? 'User Profile')?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="postview.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
     <style>
+        .maingrap{
+ width:95%;
+ float:right;
+}
         #postModal {
       display: none;
       position: fixed;
@@ -337,6 +385,8 @@ if ($viewingUserId) {
     </style>
 </head>
 <body>
+
+<div class="maingrap">
     <center>
         <div class="profile-wrapper">
             <div class="uppertop">
@@ -375,21 +425,9 @@ if ($viewingUserId) {
 
     <ul class="nav-post">
         <li><button onclick="">Posts</button></li>
-        <?php if ($isOwnProfile): ?>
-            <li><button onclick="">Drafts</button></li>
-        <?php endif; ?>
+        
     </ul>
 
-    <?php if ($isOwnProfile): ?>
-        <div class="add-post-section" id="uploadBox">
-            <form method="POST" enctype="multipart/form-data">
-                <label for="imageInput">Upload an image:</label>
-                <input type="file" name="imageInput" id="imageInput" accept="image/*" required><br>
-                <input type="text" name="descInput" id="descInput" placeholder="Enter description" required><br>
-                <button type="submit" name="upload">Add Post</button>
-            </form>
-        </div>
-    <?php endif; ?>
 
     <div class="post-grid-box" id="postGrid">
     <?php foreach ($posts as $post): ?>
@@ -447,19 +485,13 @@ if ($viewingUserId) {
   100% { transform: rotate(360deg); }
 }
 
+
 </style>
 <div id="loadingOverlay">
   <div class="spinner"></div>
 </div>
 
-<div id="postModal" style="display: none;">
-  <div id="postModalContent" >
-    <button class="close-btn" onclick="closePostModal()">
-      <i class="fa-solid fa-x"></i>
-    </button>
-    <!-- Post detail will be dynamically loaded here via JS -->
-  </div>
-</div>
+
 
 <script>
 function openPostModal(postId) {
@@ -518,9 +550,7 @@ function openPostModal(postId) {
   }
 </script>
 
-    <?php if ($isOwnProfile): ?>
-        <button class="plus-button" onclick="toggleUpload()">+</button>
-    <?php endif; ?>
+    
 
     <script>
         function follow() {
@@ -616,6 +646,6 @@ function openPostModal(postId) {
                 window.location.href = `userchat.php?username=${usernameToContact}`;
             });
         }
-    </script>
+    </script></div>
 </body>
 </html>

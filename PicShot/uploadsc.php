@@ -68,6 +68,16 @@ $conn->close();
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
+     button:not(.an-btn){
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(to right, #3b5323, #ffa500);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
     @keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
   </style>
 </head>
