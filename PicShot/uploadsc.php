@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// 1. DATABASE CONFIGURATION
 $servername = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com";
 $dbUsername = "admin";
 $dbPassword = "DBpicshot";
@@ -12,14 +11,14 @@ if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
 }
 
-// 2. USER SESSION (लॉगिन सिस्टम के हिसाब से बदल सकते हैं)
+
 if (!isset($_SESSION['user_id'])) {
-    // उदाहरण के लिए user_id = 5
+    
     $_SESSION['user_id'] = 5;
 }
 $userId = $_SESSION['user_id'];
 
-// 3. HANDLE FORM SUBMISSION: जब AJAX से डेटा आएगा
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['imageUrl'])) {
     $title       = $_POST['title'];
     $description = $_POST['description'];
@@ -51,7 +50,7 @@ $conn->close();
   <title>Create New Post</title>
   <link rel="stylesheet" href="post.css" />
   <style>
-    /* Loader Styles */
+
     #loader {
       display: none;
       position: fixed;
@@ -104,7 +103,6 @@ $conn->close();
     </div>
   </div>
 
-  <!-- Loading Overlay -->
   <div id="loader"><div></div></div>
 
   <script>

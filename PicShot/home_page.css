@@ -313,6 +313,7 @@ box-sizing: border-box;
             text-align: left;
             height: auto;
             margin-top: -20px;
+            width: 200px;
         }
         
         .material-symbols-outlined {

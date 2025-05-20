@@ -122,11 +122,17 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
         <center><div id="user-list">
             <?php
             $currentUserId = $_SESSION['user_id'];
-            $stmt = $conn->prepare("SELECT DISTINCT u.id, u.username, u.profile_photo, g.is_verified
-                                        FROM users u
-                                        LEFT JOIN goldentik g ON u.id = g.user_id
-                                        JOIN messages m ON (u.id = m.sender_id OR u.id = m.receiver_id)
-                                        WHERE u.id != ? AND (m.sender_id = ? OR m.receiver_id = ?)");
+            $stmt = $conn->prepare("
+    SELECT DISTINCT u.id, u.username, u.profile_photo, g.is_verified,
+                    MAX(m.sent_at) as last_msg_time
+    FROM users u
+    LEFT JOIN goldentik g ON u.id = g.user_id
+    JOIN messages m ON (u.id = m.sender_id OR u.id = m.receiver_id)
+    WHERE u.id != ? AND (m.sender_id = ? OR m.receiver_id = ?)
+    GROUP BY u.id
+    ORDER BY last_msg_time DESC
+");
+
             $stmt->bind_param("iii", $currentUserId, $currentUserId, $currentUserId);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -270,7 +276,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
         loadMessages();
 
         // Auto-refresh messages every 1 second for smooth chat
-        setInterval(loadMessages, 100);
+        setInterval(loadMessages, 1000);
 
         // Optional: Send message on Enter key
         messageInput.addEventListener('keydown', function(e) {

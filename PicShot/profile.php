@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
 session_start();
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
@@ -16,6 +19,12 @@ if ($conn->connect_error) {
 
 // Handle comment submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
+   
+
+
+
+
+
     $post_id = intval($_POST['post_id']);
     $comment = trim($_POST['comment']);
     if ($comment !== '') {
@@ -31,7 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
 }
 
 // Fetch post
-$post_id = isset($_GET['id']) ? intval($_GET['id']) : 19;
+// Fetch post
+$post_id = isset($_GET['id']) ? intval($_GET['id']) : 26;
 $stmt = $conn->prepare(
     "SELECT p.*, u.username
      FROM posts p JOIN users u ON p.user_id = u.id
@@ -78,6 +88,7 @@ if ($conn->connect_error) {
 
 
 function uploadToImgBB($file) {
+    define('MIN_FILE_SIZE_BYTES', 50 * 1024); 
     $tempFilePath = $file['tmp_name'];
     error_log("Temporary file path: " . $tempFilePath); // Log the temp path
 
@@ -246,6 +257,18 @@ if (isset($_SESSION['user_id'])) {
 
 
    <style>
+
+    button:not(.an-btn){
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(to right, #3b5323, #ffa500);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
      /* Sidebar buttons ke liye specific style */
 .sidebg #sidebar button.an-btn {
     color: black !important;
