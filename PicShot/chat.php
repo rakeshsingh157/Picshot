@@ -1,21 +1,10 @@
 <?php
 session_start();
 
-// Database Connection
-$host = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com";
-$username = "admin";
-$password = "DBpicshot";
-$database = "Photostore";
-
-$conn = new mysqli($host, $username, $password, $database);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
 // Initialize chat history if not set
 if (!isset($_SESSION['chat_history'])) {
    $_SESSION['chat_history'] = [
-    ["role" => "system", "content" => "You are PicShot Assistant: Hamesha yaad rakho ki tum PicShot ke official AI assistant ho.
+    ["role" => "system", "content" => " step 1 read this all then answer ( You are PicShot Assistant: Hamesha yaad rakho ki tum PicShot ke official AI assistant ho.
 
 Attempt User Language: User jis language mein baat karega, koshish karna usi mein jawab do. Agar Hindustani language mein baat kar raha hai toh Hinglish mein jawab dena hai.
 
@@ -25,13 +14,11 @@ Be Funny: Thoda humor add karo. Light aur friendly tone rakho. Jokes, playful re
 
 Normally Talk in Hinglish: Zyadatar conversations Hinglish mein hongi, jo India mein common hai. Simple aur relatable words use karna.
 
----
-ABOUT PICSHOT
----
+--- ABOUT PICSHOT ---
 
 PicShot is a simple, modern photo-sharing platform. It helps photographers and creators share their visual stories in a clean, easy-to-use space. You can upload photos, explore new content, and connect with other users. Whether you're a professional or just love taking pictures, PicShot helps you turn moments into memories and build a creative community.
 
-### Our Team
+if user ask who created picshot then reply with this or who created you
 
 PicShot was created by five BSc IT students:
 * Rakesh Kumar Singh
@@ -57,9 +44,7 @@ We use these APIs:
 * **Chatanywhere:** For our chatbot.
 * **Imagga:** To automatically get titles for your photos.
 
----
-HOW TO USE PICSHOT
----
+--- HOW TO USE PICSHOT ---
 
 ### Create an Account
 1. Click **'Sign Up'** at the bottom.
@@ -125,9 +110,7 @@ HOW TO USE PICSHOT
 ### Delete Messages / Comments
 * There are **no options to delete** messages or comments at this time.
 
----
-COMMON ISSUES & SOLUTIONS
----
+--- COMMON ISSUES & SOLUTIONS ---
 
 * **'Why can't I write a title?'**
     You can't write titles on PicShot. They are **automatically generated** for your posts.
@@ -139,7 +122,7 @@ COMMON ISSUES & SOLUTIONS
     This happens because the website uses JavaScript to **refresh chats every 3 seconds** to load new messages.
 
 * **'When I upload a profile or cover photo, it's not uploading.'**
-    Make sure your photo size is **more than 50KB**."]
+    Make sure your photo size is **more than 50KB**.)"]
 ];
 }
 
@@ -160,7 +143,7 @@ if (isset($_POST['message'])) {
         "messages" => $_SESSION['chat_history']
     ]));
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Authorization: Bearer sk-rwiv9ScxjbbgKWzxe07mcKMGqBOYYerGnXhXdrzgrA1NWsak", // Replace with your actual API key
+        "Authorization: Bearer sk-rwiv9ScxjbbgKWzxe07mcKMGqBOYYerGnXhXdrzgrA1NWsak",
         "Content-Type: application/json"
     ]);
     $response = curl_exec($ch);
@@ -172,35 +155,22 @@ if (isset($_POST['message'])) {
     // Add assistant's response to session history
     $_SESSION['chat_history'][] = ["role" => "assistant", "content" => $assistantMessage];
 
-    // Save chat to database
-    $session_id = session_id();
-    $stmt = $conn->prepare("INSERT INTO chat_history (session_id, user_message, assistant_reply) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $session_id, $message, $assistantMessage);
-    $stmt->execute();
-    $stmt->close();
-
     echo $assistantMessage;
     exit;
 }
 
 // Fetch previous chat history for display
-$session_id = session_id();
-$historyQuery = "SELECT * FROM chat_history WHERE session_id = ? ORDER BY created_at ASC";
-$stmt = $conn->prepare($historyQuery);
-$stmt->bind_param("s", $session_id);
-$stmt->execute();
-$result = $stmt->get_result();
-
 $history = [];
-while ($row = $result->fetch_assoc()) {
-    $history[] = ["role" => "user", "content" => $row['user_message']];
-    $history[] = ["role" => "assistant", "content" => $row['assistant_reply']];
+foreach ($_SESSION['chat_history'] as $entry) {
+    if (isset($entry['role']) && isset($entry['content'])) {
+        if ($entry['role'] !== 'system') {
+            $history[] = $entry;
+        }
+    }
 }
-$stmt->close();
 ?>
 
 <?php include 'sidebar.html'; ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -219,13 +189,11 @@ $stmt->close();
         </div>
         <div id="chat-container">
             <?php
-            // Display previous chat history
             foreach ($history as $entry) {
                 $role = $entry['role'];
                 $avatar = $role === 'user'
                     ? '<span class="avatar" title="You"><i class="fas fa-user"></i></span>'
                     : '<span class="avatar" title="PicShot"><i class="fas fa-robot"></i></span>';
-                // Mark assistant bubbles for markdown rendering
                 $bubble = '<div class="bubble'.($role === 'assistant' ? ' assistant-md' : '').'" data-role="' . $role . '">' . htmlspecialchars($entry['content']) . '</div>';
                 echo '<div class="message ' . $role . '">' . $avatar . $bubble . '</div>';
             }
@@ -240,16 +208,15 @@ $stmt->close();
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-// Render markdown for all assistant bubbles on page load
 function renderMarkdownInBubbles() {
     document.querySelectorAll('.bubble.assistant-md').forEach(function(el) {
-        if (!el.classList.contains('rendered')) { // Only render if not already rendered
+        if (!el.classList.contains('rendered')) {
             el.innerHTML = marked.parse(el.textContent);
             el.classList.add('rendered');
         }
     });
 }
-renderMarkdownInBubbles(); // Call on page load
+renderMarkdownInBubbles();
 
 document.getElementById('chat-form').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -257,7 +224,6 @@ document.getElementById('chat-form').addEventListener('submit', async function(e
     var message = input.value.trim();
     if (!message) return;
 
-    // Show user's message instantly
     var chatContainer = document.getElementById('chat-container');
     var userMsg = document.createElement('div');
     userMsg.className = 'message user';
@@ -292,17 +258,16 @@ document.getElementById('chat-form').addEventListener('submit', async function(e
     })
     .then(response => response.text())
     .then(reply => {
-        typingDiv.remove(); // Remove typing animation
+        typingDiv.remove();
 
         // Show bot reply with letter-by-letter animation and Markdown
         var assistantMsg = document.createElement('div');
         assistantMsg.className = 'message assistant';
         assistantMsg.innerHTML = '<span class="avatar" title="PicShot"><i class="fas fa-robot"></i></span>' +
-            '<div class="bubble assistant-md" data-role="assistant"></div>'; // Add assistant-md class here
+            '<div class="bubble assistant-md" data-role="assistant"></div>';
         chatContainer.appendChild(assistantMsg);
         chatContainer.scrollTop = chatContainer.scrollHeight;
 
-        // Use typeWriterMarkdown for animated Markdown parsing
         typeWriterMarkdown(assistantMsg.querySelector('.bubble'), reply, 0, 16, function() {
             chatContainer.scrollTop = chatContainer.scrollHeight;
         });
@@ -313,17 +278,15 @@ document.getElementById('chat-form').addEventListener('submit', async function(e
     });
 });
 
-// Letter-by-letter animation for Markdown
 function typeWriterMarkdown(el, text, i, speed, cb) {
-    // We'll animate the raw markdown and parse it as we go
     let current = text.slice(0, i);
-    el.innerHTML = marked.parse(current); // Parse Markdown as characters are added
+    el.innerHTML = marked.parse(current);
     if (i < text.length) {
         setTimeout(function() {
             typeWriterMarkdown(el, text, i + 1, speed, cb);
-        }, text[i] === '\n' ? speed * 2 : speed); // Pause longer on newlines
+        }, text[i] === '\n' ? speed * 2 : speed);
     } else if (cb) {
-        cb(); // Callback when animation is complete
+        cb();
     }
 }
 
