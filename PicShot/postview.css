@@ -35,7 +35,9 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-
+a{
+    text-decoration: none;
+}
     .comment-box button:hover {
       background: linear-gradient(to right, #3e4f28, #e2782e);
     }

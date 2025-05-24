@@ -32,6 +32,9 @@
     color: white;
     font-size: 1.2em;
 }
+a{
+    text-decoration: none;
+}
 
 .spinner {
     border: 8px solid #f3f3f3; /* Light grey border */

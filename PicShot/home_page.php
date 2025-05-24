@@ -482,6 +482,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                 max-width: 98%;
                 max-height: 98%;
                 padding: 15px; /* Less padding on small screens */
+                overflow:scroll;
             }
             .post-detail-inner {
                 flex-direction: column;
@@ -507,6 +508,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                 flex-direction: column;
                 bottom: -15px; /* Adjust sticky position */
                 padding-bottom: 15px;
+                        width: 320px;
+    
             }
             .comment-box button {
                 width: 100%;
@@ -622,7 +625,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                             $post_id_current_grid = htmlspecialchars($row['id']); // Get post ID for the current grid item
                             ?>
                             <div class="image-card" onclick="openPostPopup(<?php echo $post_id_current_grid; ?>)" style="padding-bottom:300px">
-                                <div style="width:100%; height:250px; border-radius :20px; background:#e0e0e0; display:flex; align-items:center; justify-content:center;">
+                                <div style="width:100%; height:200px; border-radius :20px; background:#e0e0e0; display:flex; align-items:center; justify-content:center;">
                                     <img src="<?php echo $photo_url; ?>" alt="" style="max-height:100%; max-width:100%;">
                                 </div>
                                 <div class="caption" style="margin-top: 10px;">
@@ -630,6 +633,16 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                                     <span class="username">
                                         <a href="userview.php?username=<?php echo urlencode($username); ?>">@<?php echo $username; ?></a>
                                     </span>
+
+
+
+
+
+
+
+
+
+                                    
                                 </div>
                             </div>
                             <?php

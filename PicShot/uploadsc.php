@@ -77,6 +77,19 @@ $conn->close();
       font-size: 16px;
       cursor: pointer;
     }
+    @media  (max-width: 768px) {
+       button:not(.an-btn){
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(to right, #3b5323, #ffa500);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom:40px
+    }
+    }
     @keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
   </style>
 </head>

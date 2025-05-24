@@ -257,6 +257,7 @@ textarea:focus {
     font-weight: 400;
     color: #444;
     margin-top: 4px;
+    width: 800px;
     display: block;
 }
 
@@ -293,7 +294,9 @@ textarea:focus {
     z-index: 1000;
     border-radius: 8px;
 }
-
+a{
+    text-decoration: none;
+}
 .nav-post li {
     cursor: pointer;
     position: relative;
@@ -331,6 +334,7 @@ textarea:focus {
 
 
 .post-grid-box {
+    position: relative;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 10px;
@@ -343,6 +347,10 @@ textarea:focus {
     position: relative;
     top: clamp(160px, 4vw, 400px);
 }
+.nav-posts{
+             border: none;
+              position: absolute;
+        }
 
 .post-card {
     background-color: #e0e0e0;
@@ -407,8 +415,28 @@ textarea:focus {
     height: 20px;
     border-radius: 50%;
 }
+.plus-button{
+    display: none;
+}
+ .nav-posts{
+             position: absolute;
+             top: -30px;
+             left: 10px;
+              
+        }
+        .nav-posts button ,li{
+            all: unset;
+        }
 
 @media (max-width: 600px) {
+    .desc {
+    font-size: clamp(12px, 1.3vw, 16px);
+    font-weight: 400;
+    color: #444;
+    margin-top: 4px;
+    width: 200px;
+    display: block;
+}
     .profile-name {
         left: calc(15% - 5vw + 90px);
     }

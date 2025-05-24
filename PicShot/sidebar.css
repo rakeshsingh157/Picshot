@@ -53,7 +53,9 @@
     background-color: white;
     cursor: pointer;
 }
-
+a{
+    text-decoration: none;
+}
 #sidebars button:hover {
     background-color: #dadada;
 }

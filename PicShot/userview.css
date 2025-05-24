@@ -1,0 +1,372 @@
+   .popup-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);}
+            
+        .popup-content {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            position: relative;
+            max-width: 95%;
+            max-height: 95%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.2s;
+            z-index: 1001;
+        }
+        .close-btn:hover {
+            color: #333;
+        }
+
+        /* Post Detail Specific Styles (from photovs.php content) */
+        .post-detail-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .post-detail-inner {
+            display: flex;
+            flex-grow: 1;
+            flex-wrap: nowrap;
+            gap: 30px;
+            align-items: stretch;
+            overflow: hidden;
+        }
+        .image-section {
+            flex: 2 1 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            max-height: 600px;
+            min-height: 300px;
+            overflow: hidden;
+            border-radius: 12px;
+            background-color: #f0f0f0;
+        }
+        .post-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .details-section {
+            flex: 1 1 350px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .details-section h2 {
+            margin-top: 0;
+            font-size: 26px;
+            color: #222;
+            margin-bottom: 5px;
+        }
+        .username {
+            color: #666;
+            font-size: 15px;
+            margin: 0 0 15px 0;
+            font-weight: 500;
+        }
+        .description {
+            font-size: 16px;
+            margin-top: 10px;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            margin-top: 0px;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .comments-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 15px;
+            margin-bottom: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            flex-grow: 1;
+        }
+
+        /* Scrollbar styling optional */
+        .comments-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .comments-container::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.15);
+            border-radius: 4px;
+        }
+        .comments-container::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        .comment {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #fdfdfd;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .comment:last-child {
+            margin-bottom: 0;
+        }
+        .comment strong {
+            color: #333;
+            font-size: 14.5px;
+        }
+        .comment p {
+            margin: 5px 0;
+            color: #444;
+            line-height: 1.5;
+        }
+        .comment small {
+            font-size: 11px;
+            color: #999;
+            display: block;
+            text-align: right;
+        }
+
+        .comment-box {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            position: sticky;
+            bottom: -25px;
+            background-color: #fff;
+            z-index: 10;
+            padding-bottom: 25px;
+        }
+
+        .nav-posts{
+             position: absolute;
+             top: -30px;
+             left: 10px;
+              
+        }
+        .nav-posts button ,li{
+            all: unset;
+        }
+        @media (max-width: 768px) {
+            .comment-box {
+                bottom: -20px;
+                padding-bottom: 20px;
+            }
+        }
+
+
+        .comment-box input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            font-size: 15px;
+            background-color: #f9f9f9;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .comment-box input:focus {
+            outline: none;
+            border-color: #FE9042;
+            box-shadow: 0 0 0 2px rgba(254, 144, 66, 0.2);
+        }
+
+        .comment-box button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(to right, #465A31, #FE9042);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .comment-box button:hover {
+            background: linear-gradient(to right, #3e4f28, #e2782e);
+            transform: translateY(-1px);
+        }
+
+        /* --- Your existing styles from userview.php --- */
+        .maingrap{
+            width:100%;
+            float:left;
+        }
+        #postModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            overflow: auto;
+            padding: 40px 10px;
+        }
+
+        #postModalContent {
+            background: #fff; /* Inherited from popup-content, but defining explicitly */
+            margin: auto;
+            padding: 30px; /* Adjust padding here */
+            width: 80%;
+            max-width: 1000px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        /* Override for close button in modal content to match popup style */
+        #postModalContent button.close-btn {
+            position: absolute;
+            top: 15px; /* Consistent with popup-overlay close-btn */
+            right: 15px; /* Consistent with popup-overlay close-btn */
+            background: none; /* Remove background */
+            color: #888; /* Match color */
+            border: none;
+            padding: 0; /* Remove padding */
+            font-size: 30px; /* Match size */
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 1001;
+        }
+        #postModalContent button.close-btn:hover {
+            color: #333;
+        }
+
+        .outer-card {
+            position: relative;
+            max-width: 1100px; /* This was causing issues with modal content */
+            /* margin: auto; - Handled by modal itself */
+            background: #fff; /* Redundant if popup-content handles this */
+            border-radius: 24px; /* Redundant if popup-content handles this */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); /* Redundant */
+            padding: 30px; /* Redundant if popup-content handles this */
+        }
+
+        @media (max-width: 768px) {
+            .popup-content {
+                max-width: 98%;
+                max-height: 98%;
+                padding: 15px;
+            }
+            .post-detail-inner {
+                flex-direction: column;
+                gap: 20px;
+                align-items: center;
+                overflow-y: auto;
+                padding-bottom: 60px;
+            }
+            .image-section {
+                width: 100%;
+                height: 250px;
+                min-height: unset;
+            }
+            .details-section {
+                width: 100%;
+                padding-bottom: 0;
+            }
+            .comments-container {
+                max-height: 200px;
+                margin-bottom: 10px;
+            }
+            .comment-box {
+                flex-direction: column;
+                bottom: -15px;
+                padding-bottom: 15px;
+            }
+            .comment-box button {
+                width: 100%;
+            }
+        }
+
+        /* Loading Screen Styles */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        #loadingOverlay.active {
+            display: flex;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Your existing styles (remaining for overall layout and elements) */
+        .edit-cover {
+            display: <?= $isOwnProfile ? 'block' : 'none' ?>;
+        }
+        .add-post-section {
+            display: none;
+        }
+        .plus-button {
+            display: <?= $isOwnProfile ? 'block' : 'none' ?>;
+        }
+        .post-overlay .delete-button {
+            display: <?= $isOwnProfile ? 'block' : 'none' ?>;
+        }
+        .username {
+    color: #666;
+    font-size: 15px;
+    margin: 0 0 0px 0;
+    font-weight: 500;
+}
+.maingrap{
+    width: 93%;
+    float: right;
+}
+a{
+    text-decoration: none;
+}
+   
+@media (max-width: 768px)
+ {
+  .maingrap
+{
+ width:100%;
+ float:right;
+}
+
+}

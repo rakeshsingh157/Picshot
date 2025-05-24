@@ -258,16 +258,6 @@ if (isset($_SESSION['user_id'])) {
 
    <style>
 
-    button:not(.an-btn){
-      margin-top: 20px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(to right, #3b5323, #ffa500);
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
 
      /* Sidebar buttons ke liye specific style */
 .sidebg #sidebar button.an-btn {
@@ -281,7 +271,24 @@ if (isset($_SESSION['user_id'])) {
  width:95%;
  float:right;
 }
+@media screen (max-width: 768px) {
+  .maingrap{
+ width:100%;
+ float:left;
+}
 
+
+
+}
+@media (max-width: 768px)
+ {
+  .maingrap
+{
+ width:100%;
+ float:left;
+}
+
+}
 
 </style>
 
@@ -319,7 +326,7 @@ if (isset($_SESSION['user_id'])) {
                     <?php endif; ?>
                 </div>
                 <span class="desc"><?=$userData['description'] ?? 'Description'?></span>
-                <button onclick="openEditModal()" class="editp">Edit Profile</button>
+                <button onclick="openEditModal()" class="editp an-btn">Edit Profile</button>
 
             </div>
         </div>
@@ -344,11 +351,6 @@ if (isset($_SESSION['user_id'])) {
             </form>
         </div>
     </div>
-
-    <ul class="nav-post">
-        <li><button onclick="toggleUpload()">Post</button></li>
-       
-    </ul>
 
     <div class="add-post-section"  id="uploadBox" style="display: none;">
         <?php
@@ -440,7 +442,14 @@ $conn->close();
         <input type="text" id="title" placeholder="Title will appear here" readonly />
         <label>Description</label>
         <textarea id="description" placeholder="Enter the description"></textarea>
-        <button onclick="submitPost()">Post</button>
+        <button onclick="submitPost()" style="  margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(to right, #3b5323, #ffa500);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;">Post</button>
       </div>
     </div>
   </div>
@@ -557,6 +566,12 @@ $conn->close();
     </div>
 
 <div class="post-grid-box" id="postGrid">
+  
+    <ul class="nav-posts an-btn">
+        <li><button onclick="toggleUpload()">Post</button></li>
+       
+    </ul>
+
     <?php foreach ($posts as $post): ?>
         <div class="post-card" onclick="openPostModal(<?= $post['id'] ?>)">
             <img src="<?= htmlspecialchars($post['photo_url']) ?>" alt="User Post">
