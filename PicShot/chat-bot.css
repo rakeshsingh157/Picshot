@@ -31,7 +31,7 @@ html, body {
     background: var(--background);
     color: var(--assistant-bubble-text);
     min-height: 100vh;
-    overflow: hidden;
+   overflow: auto;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -296,6 +296,10 @@ a {
     .chat-container-wrapper {
         border-left: none;
         border-top: 1px solid var(--chat-wrapper-border);
+    }
+     .input-area {
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 60px;
     }
 }
 

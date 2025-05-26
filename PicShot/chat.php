@@ -299,6 +299,7 @@ foreach ($_SESSION['chat_history'] as $entry) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/avif" href="icon.avif">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PicShot Assistant</title>
@@ -333,6 +334,10 @@ foreach ($_SESSION['chat_history'] as $entry) {
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
+
+
+
+
 function renderMarkdownInBubbles() {
     document.querySelectorAll('.bubble.assistant-md').forEach(function(el) {
         if (!el.classList.contains('rendered')) {

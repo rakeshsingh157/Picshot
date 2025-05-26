@@ -66,6 +66,7 @@ $comments = $stmt_c->get_result();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Post Detail</title>
+    <link rel="icon" type="image/avif" href="icon.avif">
   <style>
     /* Tumhara existing CSS yahin paste kar do */
     *{box-sizing:border-box;}
