@@ -1,17 +1,17 @@
 <?php
 session_start();
 
-// ✅ Database config
+// Database config
 $servername = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com";
 $username = "admin";
 $password = "DBpicshot";
 $dbname = "Photostore";
 
-// ✅ Connect to DB
+// Connect to DB
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
-// ✅ Handle Login Form Submission
+//  Handle Login Form Submission
 $error = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $inputUsername = $_POST['username'];
@@ -26,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $user = $result->fetch_assoc();
         if (password_verify($inputPassword, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
-            header("Location: profile.php"); // 🔁 change this to your landing page
+            header("Location: profile.php"); //  change this to your landing page
             exit();
         } else {
             $error = "❌ Invalid password.";

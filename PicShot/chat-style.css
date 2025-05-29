@@ -694,6 +694,7 @@ a{
 
             #message-area {
                 padding: 15px;
+                        height: 0;
                 gap: 8px;
             }
 
@@ -732,6 +733,7 @@ a{
             #message-input {
                 padding: 8px 12px;
                 font-size: 0.95em;
+                
             }
             #send-button {
                 padding: 8px 15px;

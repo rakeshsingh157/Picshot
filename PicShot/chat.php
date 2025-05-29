@@ -3,8 +3,8 @@ session_start();
 
 // Initialize chat history if not set
 if (!isset($_SESSION['chat_history'])) {
-   $_SESSION['chat_history'] = [
-    ["role" => "system", "content" => " step 1 read this all then answer ( You are PicShot Assistant & you also give tips to how to click photos: Hamesha yaad rakho ki tum PicShot ke official AI assistant ho.
+    $_SESSION['chat_history'] = [
+        ["role" => "system", "content" => " step 1 read this all then answer ( You are PicShot Assistant & you also give tips to how to click photos: Hamesha yaad rakho ki tum PicShot ke official AI assistant ho.
 
 Attempt User Language: User jis language mein baat karega, koshish karna usi mein jawab do. Agar Hindustani language mein baat kar raha hai toh Hinglish mein jawab dena hai.
 
@@ -111,7 +111,7 @@ We use these APIs:
 3. You can then edit your **username** (up to 150 characters) and **description**.
 
 ### Get Verification
-* To get a **verification badge (golden tick)**, contact the PicShot team at **kumarpatelrakesh222@gmail.com**.
+* To get a **verification badge (golden tick)**, contact the PicShot team at **kumarpatelrakakeh222@gmail.com**.
 
 ### Delete Messages / Comments
 * There are **no options to delete** messages or comments at this time.
@@ -129,13 +129,12 @@ We use these APIs:
 
 * **'When I upload a profile or cover photo, it's not uploading.'**
     Make sure your photo size is **more than 50KB**.)
-    
-    
-    
+
+
     step 2 read this if user ask how to click photos
 
     (
-    
+
     General Photography Tips (for Cameras)
 1. Master Manual Mode
 Why: Understanding manual settings (shutter speed, aperture, ISO) gives you total control over your photos. This basic knowledge helps you adapt to different shooting conditions and get precise compositions.
@@ -239,20 +238,23 @@ How: When there isn't much light and you can't lower your shutter speed or open 
 7. Make a Habit of Checking the ISO Before You Start Shooting
 Why: Accidentally leaving your ISO high in bright conditions can lead to overexposed or noisy photos.
 How: Before you start a new shooting session, or before you put your camera away, always make it a habit to check and reset your ISO settings to a low level (e.g., ISO 100 or 200).
-    
-    
-    
+
+
     )
-    
-    
-    
-    
-    
-    
-    
-    
+
+
     "]
 ];
+}
+
+// Initialize a separate session array for extracted data if not set
+if (!isset($_SESSION['extracted_data'])) {
+    $_SESSION['extracted_data'] = [
+        'name' => null,
+        'problem_description' => null,
+        'email' => null,
+        'phone_number' => null
+    ];
 }
 
 // Handle incoming messages
@@ -262,14 +264,84 @@ if (isset($_POST['message'])) {
     // Add user's message to session history
     $_SESSION['chat_history'][] = ["role" => "user", "content" => $message];
 
-    // Send message to the AI API
+    // --- Data Extraction Logic ---
+    // Extract Name
+    if (preg_match('/(?:my name is|i am|i\'m)\s+([a-zA-Z\s.-]+)/i', $message, $matches)) {
+        // Simple extraction: take the first captured group
+        $_SESSION['extracted_data']['name'] = trim($matches[1]);
+    }
+    // Extract Email
+    if (preg_match('/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/i', $message, $matches)) {
+        $_SESSION['extracted_data']['email'] = $matches[0];
+    }
+    // Extract Phone Number (simple example, customize for Indian formats if needed)
+    if (preg_match('/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/', $message, $matches)) {
+        $_SESSION['extracted_data']['phone_number'] = $matches[0];
+    }
+    // Extract Problem Description (more complex, consider using AI for better parsing)
+    // For now, a very basic example: if "problem" or "issue" is mentioned, capture the rest of the sentence.
+    if (preg_match('/(?:my problem is|i have an issue with|i\'m having trouble with)\s+(.+)/i', $message, $matches)) {
+        if (empty($_SESSION['extracted_data']['problem_description'])) { // Only store if not already set
+            $_SESSION['extracted_data']['problem_description'] = trim($matches[1]);
+        }
+    }
+    // You can add more specific regexes and logic here for other data points
+
+
+    // --- Logic to create limited history for API call ---
+    $messages_for_api = [];
+    
+    // Always include the system message at the beginning
+    if (!empty($_SESSION['chat_history']) && $_SESSION['chat_history'][0]['role'] === 'system') {
+        $messages_for_api[] = $_SESSION['chat_history'][0];
+    }
+
+    // Optionally, add extracted data to the API messages to inform the AI
+    // This is useful if you want the AI to remember the name, problem, etc., even if it's not in the last two messages.
+    $extracted_info_for_ai = '';
+    if (!empty($_SESSION['extracted_data']['name'])) {
+        $extracted_info_for_ai .= "The user's name is " . $_SESSION['extracted_data']['name'] . ". ";
+    }
+    if (!empty($_SESSION['extracted_data']['problem_description'])) {
+        $extracted_info_for_ai .= "The user previously described a problem: " . $_SESSION['extracted_data']['problem_description'] . ". ";
+    }
+    if (!empty($_SESSION['extracted_data']['email'])) {
+        $extracted_info_for_ai .= "Their email is " . $_SESSION['extracted_data']['email'] . ". ";
+    }
+    if (!empty($_SESSION['extracted_data']['phone_number'])) {
+        $extracted_info_for_ai .= "Their phone is " . $_SESSION['extracted_data']['phone_number'] . ". ";
+    }
+
+    if (!empty($extracted_info_for_ai)) {
+        // Prepend this extracted info to the user's current message, or add as a separate "user" role if the AI understands it.
+        // For simplicity, we can add it as an additional "user" message or modify the last user message.
+        // A better approach might be to add it to the *system* prompt if it's persistent context for the AI.
+        // For now, let's add it as a new "user" message right before the actual last user message.
+        // This makes it clear to the AI that this is relevant user-provided info.
+        // You might need to adjust the AI's system prompt to handle this kind of context if it's not already aware.
+        $messages_for_api[] = ["role" => "user", "content" => "Previously provided context: " . trim($extracted_info_for_ai)];
+    }
+
+
+    // Get only user and assistant messages from the full history
+    $user_assistant_messages = array_filter($_SESSION['chat_history'], function($entry) {
+        return $entry['role'] !== 'system';
+    });
+    
+    // Take only the last two user/assistant messages (from the actual conversation)
+    $last_two_messages = array_slice($user_assistant_messages, -2);
+    
+    // Combine the system message, any extracted data context, and the last two user/assistant messages
+    $messages_for_api = array_merge($messages_for_api, $last_two_messages);
+
+    // Send message to the AI API with the limited history and extracted data
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "https://api.chatanywhere.tech/v1/chat/completions");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
         "model" => "gpt-3.5-turbo",
-        "messages" => $_SESSION['chat_history']
+        "messages" => $messages_for_api // Use the filtered and limited history here
     ]));
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         "Authorization: Bearer sk-rwiv9ScxjbbgKWzxe07mcKMGqBOYYerGnXhXdrzgrA1NWsak",
@@ -281,14 +353,14 @@ if (isset($_POST['message'])) {
     $data = json_decode($response, true);
     $assistantMessage = $data['choices'][0]['message']['content'];
 
-    // Add assistant's response to session history
+    // Add assistant's response to the full session history (for display purposes)
     $_SESSION['chat_history'][] = ["role" => "assistant", "content" => $assistantMessage];
 
     echo $assistantMessage;
     exit;
 }
 
-// Fetch previous chat history for display
+// Fetch previous chat history for display (still uses full history for display)
 $history = [];
 foreach ($_SESSION['chat_history'] as $entry) {
     if (isset($entry['role']) && isset($entry['content'])) {
@@ -338,10 +410,6 @@ foreach ($_SESSION['chat_history'] as $entry) {
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-
-
-
-
 function renderMarkdownInBubbles() {
     document.querySelectorAll('.bubble.assistant-md').forEach(function(el) {
         if (!el.classList.contains('rendered')) {

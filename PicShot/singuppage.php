@@ -2,17 +2,17 @@
 // Start session
 session_start();
 
-// ✅ Database config
+// Database config
 $servername = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com";
 $dbusername = "admin";
 $dbpassword = "DBpicshot";
 $dbname = "Photostore";
 
-// ✅ Connect to DB
+// Connect to DB
 $conn = new mysqli($servername, $dbusername, $dbpassword, $dbname);
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
-// ✅ Handle form submission
+// Handle form submission
 $success = "";
 $error = "";
 
@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($stmt->num_rows > 0) {
         $error = "❌ Username or Email already exists.";
     } else {
-        // ✅ Insert user
+        //  Insert user
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $insert = $conn->prepare("INSERT INTO users (name, email, username, password) VALUES (?, ?, ?, ?)");
         $insert->bind_param("ssss", $name, $email, $username, $hashedPassword);
@@ -40,13 +40,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // Get the last inserted user_id to insert into the goldentik table
             $userId = $conn->insert_id;
 
-            // ✅ Insert into goldentik table with false verification status
+            //  Insert into goldentik table with false verification status
             $insertGoldentik = $conn->prepare("INSERT INTO goldentik (user_id, is_verified) VALUES (?, ?)");
             $isVerified = false; // Default to false
             $insertGoldentik->bind_param("ii", $userId, $isVerified);
 
             if ($insertGoldentik->execute()) {
-                $success = "✅ Account created successfully! Redirecting to login...";
+                $success = " Account created successfully! Redirecting to login...";
                 header("refresh:2;url=index.php");
             } else {
                 $error = "❌ Error adding to Goldentik table.";
@@ -65,10 +65,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/avif" href="icon.avif">
+    
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PicShot</title>
+  <link rel="icon" type="image/avif" href="icon.avif">
   <link rel="stylesheet" href="siup.css" />
 </head>
 <body>
@@ -88,7 +89,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           <button type="submit">Sign Up</button>
         </form>
 
-        <!-- ✅ Show messages -->
+        <!--  Show messages -->
         <?php if ($success): ?>
           <p style="color:green;"><?= $success ?></p>
         <?php elseif ($error): ?>

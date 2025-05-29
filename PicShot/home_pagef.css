@@ -6,11 +6,11 @@
             border-radius: 8px;
             margin-bottom: 10px;
             background-color: #f9f9f9;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Added subtle shadow */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
             transition: transform 0.2s ease-in-out;
         }
         .user-card:hover {
-            transform: translateY(-2px); /* Slight lift on hover */
+            transform: translateY(-2px);
         }
         .user-card .profile-photo {
             width: 50px;
@@ -18,7 +18,7 @@
             border-radius: 50%;
             object-fit: cover;
             margin-right: 10px;
-            border: 2px solid #FE9042; /* Highlight profile photo */
+            border: 2px solid #FE9042; 
         }
         .user-card .user-info .username a {
             font-weight: bold;
@@ -27,97 +27,98 @@
             transition: color 0.2s;
         }
         .user-card .user-info .username a:hover {
-            color: #FE9042; /* Hover color */
+            color: #FE9042; 
         }
         .user-card .user-info .real-name {
             font-size: 0.9em;
             color: #666;
         }
 
-        /* --- Popup Styles --- */
+       
         .popup-overlay {
-            display: none; /* Hidden by default - This is the correct one */
+            display: none; 
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8); /* Darker, more prominent dimmed background */
+            background: rgba(0, 0, 0, 0.8); 
             z-index: 1000;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(5px); /* Soft blur effect */
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px); 
         }
         .popup-content {
             background: #fff;
-            padding: 25px; /* Slightly more padding */
-            border-radius: 12px; /* Smoother corners */
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); /* Stronger shadow */
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
             position: relative;
-            max-width: 95%; /* Even larger for content */
+            max-width: 95%;
             max-height: 95%;
-            display: flex; /* Use flexbox for internal layout */
-            flex-direction: column; /* Stack content vertically */
-            overflow: hidden; /* Crucial: Prevents whole popup from scrolling */
+            display: flex;
+            flex-direction: column; 
+            overflow: hidden; 
         }
 
         .close-btn {
             position: absolute;
-            top: 15px; /* Adjusted position */
-            right: 15px; /* Adjusted position */
-            font-size: 30px; /* Larger close button */
+            top: 15px; 
+            right: 15px; 
+            font-size: 30px; 
             cursor: pointer;
             color: #888;
             transition: color 0.2s;
-            z-index: 1001; /* Ensure it's above content */
+            z-index: 1001; 
         }
         .close-btn:hover {
             color: #333;
         }
 
-        /* --- Post Detail Specific Styles (from your provided code) --- */
+       
         .post-detail-container {
-            flex-grow: 1; /* Allow content to grow */
+            flex-grow: 1; 
             display: flex;
-            flex-direction: column; /* Stack inner content vertically */
-            overflow: hidden; /* Hide internal overflow of this container */
+            flex-direction: column; 
+            overflow: hidden; 
         }
         .post-detail-inner {
             display: flex;
-            flex-grow: 1; /* Allow main content to grow */
-            flex-wrap: nowrap; /* Prevent wrapping to keep side-by-side on larger screens */
-            gap: 30px; /* Slightly less gap */
-            align-items: stretch; /* Stretch items to fill height */
-            overflow: hidden; /* Prevents overflow of inner flex container */
+            flex-grow: 1; 
+            flex-wrap: nowrap; 
+            gap: 30px; 
+            align-items: stretch; 
+            overflow: hidden;
         }
         .image-section {
-            flex: 2 1 500px; /* Stronger flex basis for image */
+            flex: 2 1 500px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100%; /* Take full height of parent */
-            max-height: 600px; /* Max height for the image section */
-            min-height: 300px; /* Minimum height for image section */
-            overflow: hidden; /* Hide overflow for image container */
-            border-radius: 12px; /* Match popup border-radius */
-            background-color: #f0f0f0; /* Placeholder background */
+            height: 100%; 
+            max-height: 600px; 
+            min-height: 300px; 
+            overflow: hidden; 
+            border-radius: 12px; 
+            background-color: #f0f0f0; 
         }
         .post-image {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* This is the key: covers the entire area */
-            border-radius: 12px; /* Match container border-radius */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Refined shadow */
+            object-fit: cover; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         .details-section {
-            flex: 1 1 350px; /* Adjust flex basis as needed */
+            flex: 1 1 350px; 
             display: flex;
-            flex-direction: column; /* Stack content vertically */
-            overflow: hidden; /* Prevents this section from scrolling if content overflows */
+            flex-direction: column; 
+            overflow: hidden; 
         }
         .details-section h2 {
             margin-top: 0;
-            font-size: 26px; /* Slightly larger heading */
+            font-size: 26px; 
             color: #222;
             margin-bottom: 5px;
         }
@@ -136,23 +137,23 @@
         }
         
         h3 {
-            margin-top: 0px; /* Adjust as needed */
+            margin-top: 0px; 
             margin-bottom: 10px;
             color: #333;
             font-size: 18px;
         }
 
         .comments-container {
-            max-height: 300px; /* Fixed height for comments, allowing *only this section* to scroll */
-            overflow-y: auto; /* Enable vertical scrolling */
-            padding-right: 15px; /* Space for scrollbar */
+            max-height: 300px; 
+            overflow-y: auto; 
+            padding-right: 15px;
             margin-bottom: 20px;
-            border-top: 1px solid #eee; /* Separator for comments section */
+            border-top: 1px solid #eee;
             padding-top: 15px;
-            flex-grow: 1; /* Allow comments container to take up remaining vertical space */
+            flex-grow: 1;
         }
 
-        /* Scrollbar styling optional */
+       
         .comments-container::-webkit-scrollbar {
             width: 8px;
         }
@@ -166,15 +167,15 @@
         }
 
         .comment {
-            margin-bottom: 15px; /* More space between comments */
-            padding: 12px; /* More padding */
-            background: #fdfdfd; /* Lighter background */
-            border-radius: 8px; /* Smoother corners */
-            border: 1px solid #eee; /* Light border */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* Subtle shadow */
+            margin-bottom: 15px; 
+            padding: 12px; 
+            background: #fdfdfd; 
+            border-radius: 8px; 
+            border: 1px solid #eee; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03); 
         }
         .comment:last-child {
-            margin-bottom: 0; /* No margin for the last comment */
+            margin-bottom: 0; 
         }
         .comment strong {
             color: #333;
@@ -188,26 +189,26 @@
         .comment small {
             font-size: 11px;
             color: #999;
-            display: block; /* New line for timestamp */
+            display: block; 
             text-align: right;
         }
 
         .comment-box {
             display: flex;
             gap: 10px;
-            margin-top: auto; /* Push comment box to the bottom */
-            padding-top: 15px; /* Space above comment box */
-            border-top: 1px solid #eee; /* Separator */
-            position: sticky; /* Make it stick to the bottom */
-            bottom: -25px; /* Offset to align with popup bottom edge (compensate popup padding) */
-            background-color: #fff; /* Match popup background */
-            z-index: 10; /* Ensure it's above scrolling comments */
-            padding-bottom: 25px; /* Compensate for sticky bottom */
+            margin-top: auto; 
+            padding-top: 15px; 
+            border-top: 1px solid #eee; 
+            position: sticky; 
+            bottom: -25px; 
+            background-color: #fff; 
+            z-index: 10; 
+            padding-bottom: 25px; 
         }
-        /* Adjust sticky position for smaller screens if needed to avoid being hidden */
+        
         @media (max-width: 768px) {
             .comment-box {
-                bottom: -20px; /* Adjust for smaller popup padding */
+                bottom: -20px; 
                 padding-bottom: 20px;
             }
         }
@@ -215,11 +216,11 @@
 
         .comment-box input {
             
-            padding: 12px 18px; /* More padding */
+            padding: 12px 18px; 
             border: 1px solid #ccc;
             border-radius: 30px;
-            font-size: 15px; /* Slightly larger font */
-            background-color: #f9f9f9; /* Light input background */
+            font-size: 15px; 
+            background-color: #f9f9f9; 
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .comment-box input:focus {
@@ -229,7 +230,7 @@
         }
 
         .comment-box button {
-            padding: 12px 25px; /* More padding */
+            padding: 12px 25px; 
             border: none;
             border-radius: 30px;
             background: linear-gradient(to right, #465A31, #FE9042);
@@ -249,32 +250,32 @@
             .popup-content {
                 max-width: 98%;
                 max-height: 98%;
-                padding: 15px; /* Less padding on small screens */
+                padding: 15px; 
                 overflow:scroll;
             }
             .post-detail-inner {
                 flex-direction: column;
-                gap: 20px; /* Less gap on small screens */
-                align-items: center; /* Center items when stacked */
-                overflow-y: auto; /* Allow inner scrolling if content is too tall */
-                padding-bottom: 60px; /* Make space for sticky comment box */
+                gap: 20px; 
+                align-items: center; 
+                overflow-y: auto; 
+                padding-bottom: 60px; 
             }
             .image-section {
                 width: 100%;
-                height: 250px; /* Fixed height for image on small screens */
+                height: 250px; 
                 min-height: unset;
             }
             .details-section {
                 width: 100%;
-                padding-bottom: 0; /* Reset */
+                padding-bottom: 0; 
             }
             .comments-container {
-                max-height: 200px; /* Smaller max-height for comments on small screens */
+                max-height: 200px; 
                 margin-bottom: 10px;
             }
             .comment-box {
                 flex-direction: column;
-                bottom: -15px; /* Adjust sticky position */
+                bottom: -15px; 
                 padding-bottom: 15px;
                         width: 320px;
     

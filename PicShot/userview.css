@@ -21,7 +21,7 @@
             max-height: 95%;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: auto;
         }
         .close-btn {
             position: absolute;
@@ -76,6 +76,12 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+        }
+        @media screen and (max-width: 768px) {
+            .details-section {
+               overflow: auto;
+            }
+            
         }
         .details-section h2 {
             margin-top: 0;

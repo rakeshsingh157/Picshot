@@ -5,10 +5,10 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Database Connection
-$servername = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com"; // YOUR DB HOST
-$username = "admin"; // YOUR DB USER
-$password = "DBpicshot"; // YOUR DB PASSWORD
-$dbname = "Photostore"; // YOUR DB NAME
+$servername = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com"; 
+$username = "admin"; 
+$password = "DBpicshot"; 
+$dbname = "Photostore"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {

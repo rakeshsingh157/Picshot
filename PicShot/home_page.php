@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// 1. Centralized Database Connection Configuration (VERIFY THESE CREDENTIALS)
+
 $host = 'database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com';
 $port = '3306';
 $dbname = 'Photostore';
@@ -21,17 +21,12 @@ if ($conn->connect_error) {
     }
 }
 
-// --- TEMP: For testing if user_id is not set by your login system ---
-// REMOVE THIS BLOCK IN PRODUCTION
-if (!isset($_SESSION['user_id'])) {
-    $_SESSION['user_id'] = 1; // Use an existing user ID from your 'users' table for testing
-}
-// --- END TEMP BLOCK ---
 
-// ====================================================================
+
+
 // --- AJAX ENDPOINTS ---
 // These blocks handle requests from JavaScript and then exit.
-// ====================================================================
+
 
 // Handle AJAX request for getting post details
 if (isset($_GET['action']) && $_GET['action'] === 'get_post_details') {
@@ -212,13 +207,13 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
 
     $stmt->close();
     $conn->close();
-    exit(); // IMPORTANT: Exit after handling the AJAX request
+    exit();
 }
 
-// ====================================================================
-// --- REGULAR PAGE LOAD (HTML Content Below) ---
+
+// REGULAR PAGE LOAD (HTML Content Below) ---
 // This part runs only if it's not an AJAX request handled above.
-// ====================================================================
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -430,15 +425,15 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
             const data = await response.text();
             popupContentInner.innerHTML = data;
 
-            // Reattach event listeners for the comment form if it's dynamically loaded
+          
             const commentForm = popupContentInner.querySelector('.comment-box');
             if (commentForm) {
                 commentForm.addEventListener('submit', async function(event) {
                     event.preventDefault(); // Prevent default form submission
                     const formData = new FormData(this);
-                    // The 'action' hidden input is already part of the form, so no need to append it again.
+                  
 
-                    const commentText = formData.get('comment'); // Get the comment text for client-side validation
+                    const commentText = formData.get('comment');
                     if (!commentText.trim()) {
                         alert("Comment cannot be empty!");
                         return;
@@ -463,7 +458,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                             this.querySelector('input[name="comment"]').value = ''; // Clear input
                         }
                     } else {
-                        const errorText = await commentResponse.text(); // Get the detailed error message from PHP
+                        const errorText = await commentResponse.text(); // Get the detailed error message
                         console.error('Error submitting comment:', errorText);
                         alert('Error submitting comment. Server said: ' + errorText.substring(0, 200) + '...'); // Show detailed error
                     }

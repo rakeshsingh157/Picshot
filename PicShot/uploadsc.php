@@ -52,6 +52,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        // --- START ADDED CODE FOR FILE TYPE VALIDATION ---
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($file['tmp_name']);
+
+        if (!in_array($mimeType, $allowedMimeTypes)) {
+            echo json_encode(['status' => 'ERROR', 'message' => 'Invalid file type. Only JPG, PNG, and WebP images are allowed.']);
+            exit;
+        }
+        // --- END ADDED CODE ---
+
         $imageContent = file_get_contents($file['tmp_name']);
         if ($imageContent === false) {
             echo json_encode(['status' => 'ERROR', 'message' => 'Failed to read uploaded image content.']);
@@ -98,16 +109,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $output = json_decode($response, true);
 
-                // --- MODIFIED LOGIC HERE ---
                 if (isset($output['status']) && $output['status'] === 'success' && isset($output['type']['ai_generated'])) {
-                    // Check 'type' key instead of 'genai'
                     if ($output['type']['ai_generated'] > 0.5) { // Adjust confidence threshold as needed
                         $is_ai_generated = true;
                     }
                 } else {
                     $ai_detection_error = 'Sightengine API response error: ' . (isset($output['error']['message']) ? $output['error']['message'] : 'Unexpected response format or missing "type.ai_generated" field.');
                 }
-                // --- END MODIFIED LOGIC ---
             }
         }
         
@@ -125,13 +133,15 @@ $conn->close();
 ?>
 
 <?php include "sidebar.html";?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/avif" href="icon.avif">
+     <title>PicShot</title>
+  <link rel="icon" type="image/avif" href="icon.avif">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PicShot</title>
+    
     <link rel="stylesheet" href="post.css" />
     <style>
         #loader {
@@ -239,7 +249,17 @@ $conn->close();
 
         async function handleImageUpload(event) {
             const file = event.target.files[0];
-            if (!file || !file.type.startsWith('image/')) return;
+            if (!file) return;
+
+            // --- START ADDED CLIENT-SIDE FILE TYPE CHECK ---
+            const allowedFileTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!allowedFileTypes.includes(file.type)) {
+                alert('Invalid file type. Only JPG, PNG, and WebP images are allowed.');
+                fileInput.value = ''; // Clear the selected file
+                return;
+            }
+            // --- END ADDED CLIENT-SIDE FILE TYPE CHECK ---
+
 
             resetUI();
 
@@ -340,8 +360,8 @@ $conn->close();
                         .map(t => t.tag.en);
                     document.getElementById("title").value = tags.join(", ") || "No title found";
                 } else {
-                     console.warn("Imagga did not return tags or encountered an error:", result);
-                     document.getElementById("title").value = "Could not generate title";
+                       console.warn("Imagga did not return tags or encountered an error:", result);
+                       document.getElementById("title").value = "Could not generate title";
                 }
             } catch (err) {
                 console.error("Imagga error:", err);

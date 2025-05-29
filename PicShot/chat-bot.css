@@ -84,6 +84,7 @@ html, body {
     gap: 1.2rem;
     scroll-behavior: smooth;
     background: transparent;
+    height: 0;
 }
 
 #chat-container::-webkit-scrollbar {

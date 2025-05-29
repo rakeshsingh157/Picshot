@@ -1,19 +1,18 @@
 <?php
 session_start();
 
-// ✅ Database config
+// Database config
 $servername = "sql12.freesqldatabase.com";
 $username = "sql12777439";
 $password = "nmMjJrQPE9";
 $dbname = "sql12777439";
-
-// ✅ Connect to DB
+//  Connect to DB
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// ✅ imgbb Upload Function
+//  imgbb Upload Function
 function uploadToImgBB($file) {
     $apiKey = "8f23d9f5d1b5960647ba5942af8a1523";
     $imageData = base64_encode(file_get_contents($file['tmp_name']));
@@ -31,7 +30,7 @@ function uploadToImgBB($file) {
     return $json['data']['url'] ?? null;
 }
 
-// ✅ Handle Form Submit
+//  Handle Form Submit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ⚠️ Make sure user_id is stored in session (e.g. after login)
     $userId = $_SESSION['user_id'] ?? 1; // For testing, you can set this manually
