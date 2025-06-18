@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+// Set default timezone to Indian/Kolkata
+date_default_timezone_set('Asia/Kolkata');
 
 $host = 'database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com';
 $port = '3306';
@@ -21,12 +23,8 @@ if ($conn->connect_error) {
     }
 }
 
-
-
-
 // --- AJAX ENDPOINTS ---
 // These blocks handle requests from JavaScript and then exit.
-
 
 // Handle AJAX request for getting post details
 if (isset($_GET['action']) && $_GET['action'] === 'get_post_details') {
@@ -157,9 +155,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
         exit();
     }
 
-    // Insert comment into database
-    // The column name for the comment text in your 'comments' table is 'comment', NOT 'comment_text'.
-    $sql = "INSERT INTO comments (post_id, user_id, comment, created_at) VALUES (?, ?, ?, NOW())";
+    // Insert comment into database with Indian/Kolkata time
+    $sql = "INSERT INTO comments (post_id, user_id, comment, created_at) VALUES (?, ?, ?, CONVERT_TZ(NOW(), 'SYSTEM', 'Asia/Kolkata'))";
     $stmt = $conn->prepare($sql);
 
     if ($stmt === false) {
@@ -210,10 +207,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
     exit();
 }
 
-
-// REGULAR PAGE LOAD (HTML Content Below) ---
-// This part runs only if it's not an AJAX request handled above.
-
+// REGULAR PAGE LOAD (HTML Content Below)
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -221,10 +215,9 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PicShot</title>
-     <link rel="icon" type="image/avif" href="icon.avif">
+    <link rel="icon" type="image/avif" href="icon.avif">
     <link rel="stylesheet" href="home_page.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=search" />
- 
     <link rel="stylesheet" href="home_pagef.css">
 </head>
 <body>
@@ -274,7 +267,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                 echo ($search !== '' && $search[0] === '@') ? ' user-list' : '';
             ?>">
                 <?php
-                // Use $search from above
                 if ($search !== '' && $search[0] === '@') {
                     // Username search: show only user info
                     $username = substr($search, 1);
@@ -286,7 +278,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
 
                     if ($result && $result->num_rows > 0) {
                         while($user = $result->fetch_assoc()) {
-                            $profile_photo = htmlspecialchars($user['profile_photo'] ?: 'default_profile.png');
+                            $profile_photo = htmlspecialchars($user['profile_photo'] ?: 'profile.jpg');
                             $username = htmlspecialchars($user['username']);
                             $name = htmlspecialchars($user['name']);
                             ?>
@@ -304,7 +296,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                     } else {
                         echo "<p>No users found.</p>";
                     }
-                    if (isset($stmt)) $stmt->close(); // Close statement if it was prepared
+                    if (isset($stmt)) $stmt->close();
                 } else {
                     // Title or caption search or default: show posts
                     if ($search !== '') {
@@ -319,10 +311,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                         $stmt->execute();
                         $result = $stmt->get_result();
                     } else {
+                        // For default view (no search), fetch posts in random order
                         $sql = "SELECT posts.*, users.username 
                                  FROM posts 
                                  JOIN users ON posts.user_id = users.id 
-                                 ORDER BY posts.created_at DESC";
+                                 ORDER BY RAND()";
                         $result = $conn->query($sql);
                     }
 
@@ -332,7 +325,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                             $caption = htmlspecialchars($row['caption']);
                             $title = htmlspecialchars($row['title']);
                             $username = htmlspecialchars($row['username']);
-                            $post_id_current_grid = htmlspecialchars($row['id']); // Get post ID for the current grid item
+                            $post_id_current_grid = htmlspecialchars($row['id']);
                             ?>
                             <div class="image-card" onclick="openPostPopup(<?php echo $post_id_current_grid; ?>)" style="padding-bottom:300px">
                                 <div style="width:100%; height:200px; border-radius :20px; background:#e0e0e0; display:flex; align-items:center; justify-content:center;">
@@ -343,16 +336,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                                     <span class="username">
                                         <a href="userview.php?username=<?php echo urlencode($username); ?>">@<?php echo $username; ?></a>
                                     </span>
-
-
-
-
-
-
-
-
-
-                                    
                                 </div>
                             </div>
                             <?php
@@ -360,7 +343,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                     } else {
                         echo "<p>No photos found.</p>";
                     }
-                    if (isset($stmt)) $stmt->close(); // Close statement if it was prepared
+                    if (isset($stmt)) $stmt->close();
                 }
                 ?>
             </div>
@@ -408,15 +391,12 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
     document.getElementById("slider")
                 .addEventListener("mouseleave", startAuto);
 
-    // --- Popup JavaScript Functions (MODIFIED FOR SAME-PAGE AJAX) ---
     async function openPostPopup(postId) {
         document.getElementById("myPostPopup").style.display = "flex";
         const popupContentInner = document.getElementById("popupContentInner");
-        // ONLY show "Loading post..." when the popup is being opened and content is fetched
         popupContentInner.innerHTML = '<p style="text-align: center; color: #555;">Loading post...</p>';
 
         try {
-            // Fetch post details from home_page.php with action=get_post_details
             const response = await fetch(`home_page.php?action=get_post_details&post_id=${postId}`);
             if (!response.ok) {
                 const errorText = await response.text();
@@ -425,13 +405,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
             const data = await response.text();
             popupContentInner.innerHTML = data;
 
-          
             const commentForm = popupContentInner.querySelector('.comment-box');
             if (commentForm) {
                 commentForm.addEventListener('submit', async function(event) {
-                    event.preventDefault(); // Prevent default form submission
+                    event.preventDefault();
                     const formData = new FormData(this);
-                  
 
                     const commentText = formData.get('comment');
                     if (!commentText.trim()) {
@@ -439,8 +417,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                         return;
                     }
 
-                    // Post comment to home_page.php with action=post_comment
-                    const commentResponse = await fetch('home_page.php', { // Target home_page.php directly
+                    const commentResponse = await fetch('home_page.php', {
                         method: 'POST',
                         body: formData
                     });
@@ -449,23 +426,20 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
                         const newCommentHtml = await commentResponse.text();
                         const commentsContainer = popupContentInner.querySelector('.comments-container');
                         if (commentsContainer) {
-                            // Find the <p> for "No comments yet" and remove it if present
                             const noCommentsMessage = commentsContainer.querySelector('p');
                             if (noCommentsMessage && noCommentsMessage.textContent.includes('No comments yet')) {
                                 noCommentsMessage.remove();
                             }
                             commentsContainer.insertAdjacentHTML('afterbegin', newCommentHtml);
-                            this.querySelector('input[name="comment"]').value = ''; // Clear input
+                            this.querySelector('input[name="comment"]').value = '';
                         }
                     } else {
-                        const errorText = await commentResponse.text(); // Get the detailed error message
+                        const errorText = await commentResponse.text();
                         console.error('Error submitting comment:', errorText);
-                        alert('Error submitting comment. Server said: ' + errorText.substring(0, 200) + '...'); // Show detailed error
+                        alert('Error submitting comment. Server said: ' + errorText.substring(0, 200) + '...');
                     }
                 });
             }
-
-
         } catch (error) {
             console.error('Error loading post details:', error);
             popupContentInner.innerHTML = '<p style="text-align: center; color: red;">Failed to load post details. Please try again. Error: ' + error.message + '</p>';
@@ -474,11 +448,9 @@ if (isset($_POST['action']) && $_POST['action'] === 'post_comment') {
 
     function closePopup() {
         document.getElementById("myPostPopup").style.display = "none";
-        // When closing, clear the content to prevent old content from showing briefly next time
         document.getElementById("popupContentInner").innerHTML = ''; 
     }
 
-    // Optional: Close popup when clicking outside the content
     window.onclick = function(event) {
         const popupOverlay = document.getElementById("myPostPopup");
         if (event.target == popupOverlay) {

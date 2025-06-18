@@ -48,6 +48,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <link rel="stylesheet" href="si.css" />
 </head>
 <body>
+  <div style="display: none;">
+  PicShot is a modern, clean photo-sharing platform created for real and original photographers. It does **not allow AI-generated images**. The goal is to support genuine creators and build a positive creative community.
+
+  On PicShot, users can upload posts, profile and cover photos, comment on posts, and chat with other users. Photos are auto-tagged with titles using the Imagga API to improve search visibility. The platform is easy to use for both professionals and casual creators.
+
+  Future updates include a monetization system where users can sell their photos and earn 90% of the revenue. PicShot is powered by HTML, CSS, JavaScript, PHP, and MySQL on AWS. It also uses ImgBB for image storage and Chatanywhere for chatbot features.
+
+  PicShot proudly supports original content. Only authentic images are accepted here. AI-generated photos will be rejected.
+
+  **Creators of PicShot**:
+  - Rakesh Kumar Singh
+  - Hrushita Mane
+  - Adarsh Maurya
+  - Sania Patil
+  - Shumaila Khan
+
+  For inquiries or verification, contact: kumarpatelrakakeh222@gmail.com
+</div>
+
   <div class="container">
     <div class="card">
       <div class="card-left">

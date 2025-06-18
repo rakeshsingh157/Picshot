@@ -1,4 +1,7 @@
 <?php
+// Set default timezone to Indian/Kolkata
+date_default_timezone_set('Asia/Kolkata');
+
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -26,12 +29,18 @@ function getUserInfoByUsername($conn, $username) {
     $result = $stmt->get_result();
     $userInfo = $result->fetch_assoc();
     $stmt->close();
+    
+    // Set default profile photo if not set
+    if (!empty($userInfo)) {
+        $userInfo['profile_photo'] = !empty($userInfo['profile_photo']) ? $userInfo['profile_photo'] : 'profile.jpg';
+    }
+    
     return $userInfo;
 }
 
 // Redirect if user is not logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ./index.php'); // Adjust path to your login page if different
+    header('Location: ./index.php');
     exit;
 }
 
@@ -42,33 +51,30 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_users') {
     $users = [];
 
     if (!empty($searchQuery)) {
-        // Search for users whose username or (if you have it) full name matches the query
-        // Exclude the current logged-in user
         $stmt = $conn->prepare("
             SELECT u.id, u.username, u.profile_photo, g.is_verified
             FROM users u
             LEFT JOIN goldentik g ON u.id = g.user_id
             WHERE u.username LIKE ? AND u.id != ?
             LIMIT 10
-        "); // LIMIT for performance
+        ");
         $searchParam = "%" . $searchQuery . "%";
         $stmt->bind_param("si", $searchParam, $currentUserId);
         $stmt->execute();
         $result = $stmt->get_result();
 
         while ($row = $result->fetch_assoc()) {
-            // Ensure profile_photo path is correct or defaults
+            // Set default profile photo if not set
             $row['profile_photo'] = !empty($row['profile_photo']) ? htmlspecialchars($row['profile_photo']) : 'profile.jpg';
             $users[] = $row;
         }
         $stmt->close();
     }
-    // Return users as JSON
+    
     header('Content-Type: application/json');
     echo json_encode($users);
     exit;
 }
-
 
 // --- AJAX endpoint for sending messages ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_username'], $_POST['message'])) {
@@ -80,8 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_username'], 
         $receiverInfo = getUserInfoByUsername($conn, $receiverUsername);
         if ($receiverInfo) {
             $receiverId = $receiverInfo['id'];
-            $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)");
+            
+            // Insert message with Indian/Kolkata time
+            $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, message, sent_at) 
+                                   VALUES (?, ?, ?, CONVERT_TZ(NOW(), 'SYSTEM', 'Asia/Kolkata'))");
             $stmt->bind_param("iis", $senderId, $receiverId, $message);
+            
             if ($stmt->execute()) {
                 echo json_encode(['success' => true, 'sent_message' => htmlspecialchars($message)]);
             } else {
@@ -94,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_username'], 
     } else {
         echo json_encode(['error' => 'Empty message or username.']);
     }
-    exit; // Important to exit after JSON response
+    exit;
 }
 
 // --- AJAX endpoint for fetching messages ---
@@ -109,11 +119,13 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
     }
 
     $otherUserId = $otherUserInfo['id'];
+    
+    // Fetch messages with Indian/Kolkata time
     $stmt = $conn->prepare("SELECT m.*, u1.profile_photo AS sender_photo
-                                FROM messages m
-                                JOIN users u1 ON m.sender_id = u1.id
-                                WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
-                                ORDER BY m.sent_at ASC");
+                           FROM messages m
+                           JOIN users u1 ON m.sender_id = u1.id
+                           WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
+                           ORDER BY m.sent_at ASC");
     $stmt->bind_param("iiii", $loggedInUserId, $otherUserId, $otherUserId, $loggedInUserId);
     $stmt->execute();
     $messagesResult = $stmt->get_result();
@@ -126,19 +138,20 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
         foreach ($messages as $message) {
             $isMe = ($message['sender_id'] == $loggedInUserId);
             $messageClass = $isMe ? 'sent-message' : 'received-message';
-            // Default photo for messages
-            $photoUrl = !empty($message['sender_photo']) ? htmlspecialchars($message['sender_photo']) : 'profile.jpg'; // Use profile.jpg as default
-
+            
+            // Use profile.jpg as default if no photo is set
+            $photoUrl = !empty($message['sender_photo']) ? htmlspecialchars($message['sender_photo']) : 'profile.jpg';
+            
+            // Format time in Indian/Kolkata timezone
+            $sentTime = date('H:i', strtotime($message['sent_at']));
+            
             $output .= "<div class='message-container $messageClass'>";
-            // Profile photo placement based on sender and flex-direction: row-reverse in CSS
             if ($isMe) {
-                // For sent messages, image comes FIRST in HTML for row-reverse to place it on the RIGHT
                 $output .= "<img src='$photoUrl' alt='Profile' class='profile-photo'>";
-                $output .= "<div class='message-content-wrapper'><span class='message-body'>" . htmlspecialchars($message['message']) . "</span><small class='message-timestamp'>" . date('H:i', strtotime($message['sent_at'])) . "</small></div>";
+                $output .= "<div class='message-content-wrapper'><span class='message-body'>" . htmlspecialchars($message['message']) . "</span><small class='message-timestamp'>$sentTime</small></div>";
             } else {
-                // For received messages, photo comes first, then message content div (default flex-direction: row)
                 $output .= "<img src='$photoUrl' alt='Profile' class='profile-photo'>";
-                $output .= "<div class='message-content-wrapper'><span class='message-body'>" . htmlspecialchars($message['message']) . "</span><small class='message-timestamp'>" . date('H:i', strtotime($message['sent_at'])) . "</small></div>";
+                $output .= "<div class='message-content-wrapper'><span class='message-body'>" . htmlspecialchars($message['message']) . "</span><small class='message-timestamp'>$sentTime</small></div>";
             }
             $output .= "</div>";
         }
@@ -150,18 +163,17 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
 }
 ?>
 
-<?php include "sidebar.html"; // Assuming sidebar.html exists and contains your main sidebar structure ?>
+<?php include "sidebar.html"; ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-      <link rel="icon" type="image/avif" href="icon.avif">
+    <link rel="icon" type="image/avif" href="icon.avif">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PicShot</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="chat-style.css">
 </head>
 <body>
@@ -176,7 +188,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                 $currentUserId = $_SESSION['user_id'];
                 $stmt = $conn->prepare("
                     SELECT DISTINCT u.id, u.username, u.profile_photo, g.is_verified,
-                                    MAX(m.sent_at) as last_msg_time
+                                   MAX(m.sent_at) as last_msg_time
                     FROM users u
                     LEFT JOIN goldentik g ON u.id = g.user_id
                     JOIN messages m ON (u.id = m.sender_id AND m.receiver_id = ?) OR (u.id = m.receiver_id AND m.sender_id = ?)
@@ -184,7 +196,6 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                     GROUP BY u.id
                     ORDER BY last_msg_time DESC
                 ");
-
                 $stmt->bind_param("iii", $currentUserId, $currentUserId, $currentUserId);
                 $stmt->execute();
                 $result = $stmt->get_result();
@@ -192,15 +203,14 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
                         $username = htmlspecialchars($row['username']);
-                        // Fallback for profile photo - use profile.jpg if empty or invalid
                         $profilePhotoUrl = !empty($row['profile_photo']) ? htmlspecialchars($row['profile_photo']) : 'profile.jpg';
                         $isVerified = $row['is_verified'] ? " <img src='vf.png' alt='Verified' class='verified-badge'>" : "";
                         $activeClass = (isset($_GET['username']) && $_GET['username'] === $username) ? 'active' : '';
 
                         echo "<a class='user-item $activeClass' href='?username=$username'>
-                                    <img src='$profilePhotoUrl' alt='Profile Photo'>
-                                    <span>$username $isVerified</span>
-                                </a>";
+                                <img src='$profilePhotoUrl' alt='Profile Photo'>
+                                <span>$username $isVerified</span>
+                              </a>";
                     }
                 } else {
                     echo "<center><p class='no-messages'><i class='fas fa-users'></i> No conversations yet. Click '+' to find users!</p></center>";
@@ -227,21 +237,17 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                 if ($receiverUsername) {
                     $receiverInfo = getUserInfoByUsername($conn, $receiverUsername);
                     if ($receiverInfo) {
-                        // Fallback for profile photo - use profile.jpg
                         $profilePhotoUrl = !empty($receiverInfo['profile_photo']) ? htmlspecialchars($receiverInfo['profile_photo']) : 'profile.jpg';
                         $isVerified = $receiverInfo['is_verified'] ? "<img src='vf.png' alt='Verified' class='verified-badge'>" : "";
 
-                        // Make the h2 element clickable
                         echo "<img src='$profilePhotoUrl' alt='Profile Photo'>";
                         echo "<h2 onclick=\"window.location.href='userview.php?username=" . htmlspecialchars($receiverUsername) . "'\">" . htmlspecialchars($receiverUsername) . " $isVerified</h2>";
                     } else {
-                        // Display generic user not found header, use profile.jpg for default
-                        echo "<img src='profile.jpg' alt='Default Photo' class='profile-photo'>"; // Placeholder
+                        echo "<img src='profile.jpg' alt='Default Photo' class='profile-photo'>";
                         echo "<h2>User not found.</h2>";
                     }
                 } else {
-                    // Default header when no user is selected, use profile.jpg for default
-                    echo "<img src='profile.jpg' alt='Default Photo' class='profile-photo'>"; // Placeholder if no user selected
+                    echo "<img src='profile.jpg' alt='Default Photo' class='profile-photo'>";
                     echo "<h2>Select a user to chat</h2>";
                 }
                 ?>
@@ -267,15 +273,14 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
         const messageArea = document.getElementById('message-area');
         const receiverUsernameInput = document.getElementById('receiver-username');
         const messageInput = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button'); // Get the send button
+        const sendButton = document.getElementById('send-button');
         const addIcon = document.querySelector('.add-icon');
         const searchOverlay = document.getElementById('search-overlay');
         const closeSearchBtn = document.querySelector('.search-box .close-btn');
         const searchInputOverlay = document.getElementById('search-input-overlay');
         const searchUserList = document.getElementById('search-user-list');
-        const myProfilePhoto = <?= json_encode($_SESSION['profile_photo'] ?? 'profile.jpg') ?>; // Fallback default photo
+        const myProfilePhoto = <?= json_encode($_SESSION['profile_photo'] ?? 'profile.jpg') ?>;
 
-        // Function to escape HTML for preventing XSS
         function escapeHtml(text) {
             var map = {
                 '&': '&amp;',
@@ -287,7 +292,6 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
-        // Debounce function to limit API calls during typing
         let debounceTimeout;
         const debounce = (func, delay) => {
             return function(...args) {
@@ -297,28 +301,21 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             };
         };
 
-        // --- Chat Specific Functions ---
-        // Function to fetch messages
         function fetchMessages() {
             const username = receiverUsernameInput.value;
-            if (!username) {
-                // If no user is selected, don't fetch messages
-                return;
-            }
+            if (!username) return;
+            
             fetch(`?messages_only=1&username=${encodeURIComponent(username)}`)
-                .then(response => response.text()) // Get text as it's partial HTML
+                .then(response => response.text())
                 .then(html => {
-                    // Check if the current message area content is different
-                    // This prevents unnecessary re-rendering and scroll jumps
                     if (messageArea.innerHTML.trim() !== html.trim()) {
                         messageArea.innerHTML = html;
-                        messageArea.scrollTop = messageArea.scrollHeight; // Scroll to bottom
+                        messageArea.scrollTop = messageArea.scrollHeight;
                     }
                 })
                 .catch(error => console.error('Error fetching messages:', error));
         }
 
-        // Function to send a message
         function sendMessage() {
             const receiverUsername = receiverUsernameInput.value;
             const message = messageInput.value.trim();
@@ -328,15 +325,13 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                 return;
             }
 
-            // Disable button and show loading state
             sendButton.disabled = true;
-            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Spinner icon
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
             const formData = new FormData();
             formData.append('receiver_username', receiverUsername);
             formData.append('message', message);
 
-            // Immediately append the message for instant feedback
             const sentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
             const newMessageHtml = `
                 <div class="message-container sent-message temporary-sending">
@@ -348,39 +343,32 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                 </div>
             `;
             messageArea.insertAdjacentHTML('beforeend', newMessageHtml);
-            messageInput.value = ''; // Clear input field
-            messageArea.scrollTop = messageArea.scrollHeight; // Scroll to bottom
+            messageInput.value = '';
+            messageArea.scrollTop = messageArea.scrollHeight;
 
-            fetch('', { // Send to the same PHP script
+            fetch('', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                // Re-enable button and restore icon
                 sendButton.disabled = false;
-                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>'; // Restore send icon
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
 
                 const tempMessageElement = messageArea.querySelector('.temporary-sending');
                 if (tempMessageElement) {
-                    tempMessageElement.classList.remove('temporary-sending'); // Remove the temporary class
-
+                    tempMessageElement.classList.remove('temporary-sending');
                     const sendingIndicator = tempMessageElement.querySelector('.sending-indicator');
                     if (sendingIndicator) {
-                           sendingIndicator.remove(); // Remove the clock icon
+                        sendingIndicator.remove();
                     }
                 }
 
-                if (data.success) {
-                    // Message successfully sent and already appended.
-                    // You might want to trigger a fetchMessages() here if you want to update the sidebar's last message time,
-                    // but for just the chat window, it's already shown.
-                    // fetchMessages(); // Uncomment if you want to refresh all messages for latest state/sidebar update
-                } else {
+                if (!data.success) {
                     console.error('Error sending message:', data.error);
                     alert('Error sending message: ' + data.error);
                     if (tempMessageElement) {
-                        tempMessageElement.classList.add('message-error'); // Add an error class
+                        tempMessageElement.classList.add('message-error');
                         const timestampSmall = tempMessageElement.querySelector('.message-timestamp');
                         if (timestampSmall) {
                             timestampSmall.innerHTML += ' <i class="fas fa-exclamation-triangle" style="color: red;"></i>';
@@ -389,16 +377,14 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                 }
             })
             .catch(error => {
-                // Re-enable button and handle network error
                 sendButton.disabled = false;
-                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>'; // Restore send icon
-
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
                 console.error('Network error sending message:', error);
                 alert('Network error. Could not send message.');
 
                 const tempMessageElement = messageArea.querySelector('.temporary-sending');
                 if (tempMessageElement) {
-                    tempMessageElement.classList.add('message-error'); // Add an error class
+                    tempMessageElement.classList.add('message-error');
                     const timestampSmall = tempMessageElement.querySelector('.message-timestamp');
                     if (timestampSmall) {
                         timestampSmall.innerHTML += ' <i class="fas fa-exclamation-triangle" style="color: red;"></i>';
@@ -407,28 +393,23 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             });
         }
 
-        // Set up Enter key to send message
         messageInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter for new line
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         });
 
-        // Initial fetch of messages if a username is in the URL
         if (receiverUsernameInput.value) {
             fetchMessages();
-            // Auto-refresh messages every few seconds (optional, for real-time feel)
-            // Consider WebSockets for true real-time chat for better performance and user experience
-            setInterval(fetchMessages, 5000); // Fetch every 5 seconds
+            setInterval(fetchMessages, 5000);
         }
 
-        // Highlight active user in sidebar
         const currentChatUsername = receiverUsernameInput.value;
         if (currentChatUsername) {
             const userItems = document.querySelectorAll('.user-item');
             userItems.forEach(item => {
-                const usernameInItem = item.querySelector('span').innerText.split(' ')[0]; // Get username before verified badge
+                const usernameInItem = item.querySelector('span').innerText.split(' ')[0];
                 if (usernameInItem === currentChatUsername) {
                     item.classList.add('active');
                 } else {
@@ -437,9 +418,6 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             });
         }
 
-        // --- Search User Functions ---
-
-        // Toggle search overlay
         addIcon.addEventListener('click', () => {
             searchOverlay.classList.add('active');
             searchInputOverlay.focus();
@@ -448,11 +426,10 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
 
         closeSearchBtn.addEventListener('click', () => {
             searchOverlay.classList.remove('active');
-            searchInputOverlay.value = ''; // Clear search input
-            searchUserList.innerHTML = ''; // Clear search results
+            searchInputOverlay.value = '';
+            searchUserList.innerHTML = '';
         });
 
-        // Function to perform user search via AJAX
         const searchUsers = debounce((query) => {
             searchUserList.innerHTML = '<p class="search-no-results">Searching...</p>';
 
@@ -475,16 +452,15 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
                     console.error('Error fetching search results:', error);
                     searchUserList.innerHTML = '<p class="search-no-results" style="color: red;">Error searching. Please try again.</p>';
                 });
-        }, 300); // Debounce search by 300ms
+        }, 300);
 
-        // Display search results in the overlay
         function displaySearchResults(users) {
-            searchUserList.innerHTML = ''; // Clear previous results
+            searchUserList.innerHTML = '';
 
             if (users.length > 0) {
                 users.forEach(user => {
-                    const userDiv = document.createElement('a'); // Use <a> for clickable
-                    userDiv.href = `?username=${encodeURIComponent(user.username)}`; // Link to chat with this user
+                    const userDiv = document.createElement('a');
+                    userDiv.href = `?username=${encodeURIComponent(user.username)}`;
                     userDiv.classList.add('search-user-item');
                     const verifiedBadge = user.is_verified ? "<img src='vf.png' alt='Verified' class='verified-badge'>" : "";
                     userDiv.innerHTML = `
@@ -498,11 +474,12 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
             }
         }
 
-        // Listen for input on the search overlay
         searchInputOverlay.addEventListener('input', (e) => {
             searchUsers(e.target.value);
         });
-
     </script>
 </body>
 </html>
+<?php
+$conn->close();
+?>

@@ -452,6 +452,18 @@ ob_end_flush(); // End output buffering for the main page load
 }
 
 }
+.delete-button {
+    background-color: #dc3545;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    margin-top: 5px;
+    display: none;
+}
    </style>
 </head>
 <body>
