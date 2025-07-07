@@ -500,13 +500,7 @@ ob_end_flush(); // End output buffering for the main page load
         </div>
     </center>
 
-    <div class="edit-cover" id="editCover">
-        <label for="coverInput" style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-            <img src="image.png" alt="" style="width: 24px; height: 24px;"> Edit Cover
-        </label>
-        <input type="file" id="coverInput" name="coverInput" accept="image/*" style="display: none;">
-    </div>
-
+    
 
     <div class="post-grid-box" id="postGrid">
            

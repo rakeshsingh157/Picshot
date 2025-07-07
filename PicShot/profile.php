@@ -1,6 +1,5 @@
 <?php
 date_default_timezone_set('Asia/Kolkata');
-
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
@@ -19,26 +18,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Handle comment submission with India/Kolkata time
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
-    $post_id = intval($_POST['post_id']);
-    $comment = trim($_POST['comment']);
-    if ($comment !== '') {
-        $current_time = date('Y-m-d H:i:s'); // This will be in Asia/Kolkata timezone
-        
-        $ins = $conn->prepare(
-            "INSERT INTO comments (post_id, user_id, comment, created_at) VALUES (?, ?, ?, ?)"
-        );
-        $ins->bind_param("iiss", $post_id, $user_id, $comment, $current_time);
-        if (!$ins->execute()) {
-            die("Insert error: " . $ins->error);
-        }
-        $ins->close();
-    }
-}
-
-
-// Check if time_logs table exists, if not create it
+// Create time_logs table if needed
 $table_check = $conn->query("SHOW TABLES LIKE 'time_logs'");
 if ($table_check->num_rows == 0) {
     $create_table = "CREATE TABLE time_logs (
@@ -47,13 +27,12 @@ if ($table_check->num_rows == 0) {
         time_recorded DATETIME NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id)
     )";
-    
     if (!$conn->query($create_table)) {
         error_log("Error creating time_logs table: " . $conn->error);
     }
 }
 
-// Save current India/Kolkata time to database (only if table exists)
+// Save current time
 $current_time = date('Y-m-d H:i:s');
 try {
     $time_stmt = $conn->prepare("INSERT INTO time_logs (user_id, time_recorded) VALUES (?, ?)");
@@ -65,233 +44,283 @@ try {
 } catch (Exception $e) {
     error_log("Error saving time: " . $e->getMessage());
 }
-// Save current India/Kolkata time to database
-$current_time = date('Y-m-d H:i:s');
-$time_stmt = $conn->prepare("INSERT INTO time_logs (user_id, time_recorded) VALUES (?, ?)");
-$time_stmt->bind_param("is", $user_id, $current_time);
-$time_stmt->execute();
-$time_stmt->close();
 
-// Handle comment submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
-    $post_id = intval($_POST['post_id']);
-    $comment = trim($_POST['comment']);
-    if ($comment !== '') {
-        $ins = $conn->prepare(
-            "INSERT INTO comments (post_id, user_id, comment) VALUES (?, ?, ?)"
-        );
-        $ins->bind_param("iis", $post_id, $user_id, $comment);
-        if (!$ins->execute()) {
-            die("Insert error: " . $ins->error);
-        }
-        $ins->close();
-    }
-}
-
-// Fetch post
-$post_id = isset($_GET['id']) ? intval($_GET['id']) : 26;
-$stmt = $conn->prepare(
-    "SELECT p.*, u.username
-     FROM posts p JOIN users u ON p.user_id = u.id
-     WHERE p.id = ?"
-);
-$stmt->bind_param("i", $post_id);
-$stmt->execute();
-$post = $stmt->get_result()->fetch_assoc();
-if (!$post) {
-    die("Post not found!");
-}
-
-// Fetch comments
-$stmt_c = $conn->prepare(
-    "SELECT c.comment, c.created_at, u.username
-     FROM comments c
-     JOIN users u ON c.user_id = u.id
-     WHERE c.post_id = ?
-     ORDER BY c.created_at DESC"
-);
-$stmt_c->bind_param("i", $post_id);
-$stmt_c->execute();
-$comments = $stmt_c->get_result();
-?>
-
-<?php
-$servername = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com";
-$username = "admin";
-$password = "DBpicshot";
-$dbname = "Photostore";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
+/**
+ * Uploads a file to ImgBB using their API.
+ * Includes enhanced error handling for cURL and API responses.
+ *
+ * @param array $file The $_FILES array for the uploaded file.
+ * @return string|null The URL of the uploaded image if successful, otherwise null.
+ */
 function uploadToImgBB($file) {
-    define('MIN_FILE_SIZE_BYTES', 50 * 1024); 
-    $tempFilePath = $file['tmp_name'];
-    error_log("Temporary file path: " . $tempFilePath);
+    $apiKey = "8f23d9f5d1b5960647ba5942af8a1523"; // Ensure this API key is valid and active
+    
+    // Check if file content is available before encoding
+    if (!isset($file['tmp_name']) || !file_exists($file['tmp_name']) || filesize($file['tmp_name']) === 0) {
+        error_log("ImgBB Upload Error: Temporary file not found or empty for " . $file['name']);
+        return null;
+    }
 
-    $apiKey = "8f23d9f5d1b5960647ba5942af8a1523";
-    $imageData = base64_encode(file_get_contents($tempFilePath));
+    $imageData = base64_encode(file_get_contents($file['tmp_name']));
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "https://api.imgbb.com/1/upload?key=" . $apiKey);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, ['image' => $imageData]);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Set a timeout for the cURL request (30 seconds)
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Consider setting this to true in production with proper CA certs
 
     $response = curl_exec($ch);
+    if (curl_errno($ch)) {
+        error_log("cURL Error: " . curl_error($ch));
+        curl_close($ch);
+        return null;
+    }
     curl_close($ch);
 
     $json = json_decode($response, true);
-    return $json['data']['url'] ?? null;
+    if (isset($json['data']['url'])) {
+        return $json['data']['url'];
+    } else {
+        // Log the full ImgBB response for detailed debugging
+        error_log("ImgBB API Error: " . print_r($json, true) . " for file " . $file['name']);
+        return null;
+    }
 }
 
+/**
+ * Provides a user-friendly error message for PHP file upload errors.
+ *
+ * @param int $errorCode The error code from $_FILES['name']['error'].
+ * @return string A descriptive error message.
+ */
+function getUploadErrorMessage($errorCode) {
+    switch ($errorCode) {
+        case UPLOAD_ERR_INI_SIZE:
+            return "The uploaded file exceeds the maximum file size allowed by the server (php.ini).";
+        case UPLOAD_ERR_FORM_SIZE:
+            return "The uploaded file exceeds the maximum file size specified in the form.";
+        case UPLOAD_ERR_PARTIAL:
+            return "The file was only partially uploaded. Please try again.";
+        case UPLOAD_ERR_NO_FILE:
+            return "No file was uploaded. Please select a file.";
+        case UPLOAD_ERR_NO_TMP_DIR:
+            return "Missing a temporary folder on the server for uploads.";
+        case UPLOAD_ERR_CANT_WRITE:
+            return "Failed to write the file to disk on the server.";
+        case UPLOAD_ERR_EXTENSION:
+            return "A PHP extension stopped the file upload. Check server configuration.";
+        default:
+            return "An unknown file upload error occurred.";
+    }
+}
+
+// Handle all POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $userId = $_SESSION['user_id'];
-
-    // Process Profile Photo Upload
-    if (isset($_FILES['profilePhoto']) && $_FILES['profilePhoto']['error'] === 0) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
-        $profilePhotoUrl = uploadToImgBB($_FILES['profilePhoto']);
-        if ($profilePhotoUrl) {
-            $stmt = $conn->prepare("UPDATE users SET profile_photo = ? WHERE id = ?");
-            $stmt->bind_param("si", $profilePhotoUrl, $userId);
-            $stmt->execute();
-            echo '<script>document.getElementById("upload-loader").style.display = "none";</script>';
-        } else {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Failed to upload profile picture.");</script>';
+    // Handle comments
+    if (isset($_POST['comment'])) {
+        $post_id = intval($_POST['post_id']);
+        $comment = trim($_POST['comment']);
+        if ($comment !== '') {
+            $current_time = date('Y-m-d H:i:s');
+            $ins = $conn->prepare(
+                "INSERT INTO comments (post_id, user_id, comment, created_at) VALUES (?, ?, ?, ?)"
+            );
+            $ins->bind_param("iiss", $post_id, $user_id, $comment, $current_time);
+            if (!$ins->execute()) {
+                error_log("Comment insert error: " . $ins->error);
+            }
+            $ins->close();
         }
     }
-
-    // Process Cover Photo Upload
-    if (isset($_FILES['coverInput']) && $_FILES['coverInput']['error'] === 0) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
-        $coverPhotoUrl = uploadToImgBB($_FILES['coverInput']);
-        if ($coverPhotoUrl) {
-            $stmt = $conn->prepare("UPDATE users SET cover_photo = ? WHERE id = ?");
-            $stmt->bind_param("si", $coverPhotoUrl, $userId);
-            $stmt->execute();
-            echo '<script>document.getElementById("upload-loader").style.display = "none";</script>';
+    
+    // Handle file uploads (profile, cover, and post images)
+    $handled = false;
+    
+    // Profile photo upload
+    // Check for 'profilePhoto' as the name attribute in the file input
+    if (!$handled && isset($_FILES['profilePhoto'])) {
+        if ($_FILES['profilePhoto']['error'] === UPLOAD_ERR_OK) {
+            $profilePhotoUrl = uploadToImgBB($_FILES['profilePhoto']);
+            if ($profilePhotoUrl) {
+                $stmt = $conn->prepare("UPDATE users SET profile_photo = ? WHERE id = ?");
+                $stmt->bind_param("si", $profilePhotoUrl, $user_id);
+                if ($stmt->execute()) {
+                    $_SESSION['profile_photo'] = $profilePhotoUrl;
+                    echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Profile photo updated successfully!"); window.location.reload();</script>';
+                } else {
+                    echo '<script>alert("Error: Could not save profile photo link to database.");</script>';
+                    error_log("DB update error for profile photo: " . $stmt->error);
+                }
+                $stmt->close();
+            } else {
+                echo '<script>alert("Error: Failed to upload profile photo to ImgBB. Please try again.");</script>';
+            }
         } else {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Failed to upload cover photo.");</script>';
+            // Log and alert specific upload error from PHP's built-in file upload mechanism
+            $errorMessage = getUploadErrorMessage($_FILES['profilePhoto']['error']);
+            error_log("Profile Photo Upload Error: " . $errorMessage . " (Code: " . $_FILES['profilePhoto']['error'] . ")");
+            echo '<script>alert("File upload error for profile photo: ' . $errorMessage . '");</script>';
         }
+        $handled = true; // Mark as handled even if there's an error, to prevent other file handlers from running
     }
-
-    // Process Post Image Upload
-    if (isset($_FILES['imageInput']) && $_FILES['imageInput']['error'] === 0) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
-        $postPhotoUrl = uploadToImgBB($_FILES['imageInput']);
-        $postDescription = $_POST['descInput'] ?? '';
-
-        if ($postPhotoUrl) {
-            $stmt = $conn->prepare("INSERT INTO posts (user_id, photo_url, caption) VALUES (?, ?, ?)");
-            $stmt->bind_param("iss", $userId, $postPhotoUrl, $postDescription);
-            $stmt->execute();
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; window.location.reload();</script>';
+    
+    // Cover photo upload
+    // Check for 'coverInput' as the name attribute in the file input
+    if (!$handled && isset($_FILES['coverInput'])) {
+        if ($_FILES['coverInput']['error'] === UPLOAD_ERR_OK) {
+            $coverPhotoUrl = uploadToImgBB($_FILES['coverInput']);
+            if ($coverPhotoUrl) {
+                $stmt = $conn->prepare("UPDATE users SET cover_photo = ? WHERE id = ?");
+                $stmt->bind_param("si", $coverPhotoUrl, $user_id);
+                if ($stmt->execute()) {
+                    $_SESSION['cover_photo'] = $coverPhotoUrl;
+                    echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Cover photo updated successfully!"); window.location.reload();</script>';
+                } else {
+                    echo '<script>alert("Error: Could not save cover photo link to database.");</script>';
+                    error_log("DB update error for cover photo: " . $stmt->error);
+                }
+                $stmt->close();
+            } else {
+                echo '<script>alert("Error: Failed to upload cover photo to ImgBB. Please try again.");</script>';
+            }
         } else {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Failed to upload post.");</script>';
+            // Log and alert specific upload error
+            $errorMessage = getUploadErrorMessage($_FILES['coverInput']['error']);
+            error_log("Cover Photo Upload Error: " . $errorMessage . " (Code: " . $_FILES['coverInput']['error'] . ")");
+            echo '<script>alert("File upload error for cover photo: ' . $errorMessage . '");</script>';
         }
+        $handled = true;
     }
-
-    // Edit username and description
-    if (isset($_POST['editUsernameSubmit']) && isset($_POST['newUsername']) && isset($_POST['newDescription'])) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
+    
+    // Post image upload
+    if (!$handled && isset($_FILES['imageInput'])) {
+        if ($_FILES['imageInput']['error'] === UPLOAD_ERR_OK) {
+            $postPhotoUrl = uploadToImgBB($_FILES['imageInput']);
+            $postDescription = $_POST['descInput'] ?? '';
+            if ($postPhotoUrl) {
+                $stmt = $conn->prepare("INSERT INTO posts (user_id, photo_url, caption) VALUES (?, ?, ?)");
+                $stmt->bind_param("iss", $user_id, $postPhotoUrl, $postDescription);
+                if ($stmt->execute()) {
+                    echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Post created successfully!"); window.location.reload();</script>';
+                } else {
+                    echo '<script>alert("Error: Could not save post to database.");</script>';
+                    error_log("DB insert error for new post: " . $stmt->error);
+                }
+                $stmt->close();
+            } else {
+                echo '<script>alert("Error: Failed to upload post image to ImgBB. Please try again.");</script>';
+            }
+        } else {
+            // Log and alert specific upload error
+            $errorMessage = getUploadErrorMessage($_FILES['imageInput']['error']);
+            error_log("Post Image Upload Error: " . $errorMessage . " (Code: " . $_FILES['imageInput']['error'] . ")");
+            echo '<script>alert("File upload error for post image: ' . $errorMessage . '");</script>';
+        }
+        $handled = true;
+    }
+    
+    // Edit profile
+    if (!$handled && isset($_POST['editUsernameSubmit'])) {
         $newUsername = $_POST['newUsername'];
-        $newDescription = substr($_POST['newDescription'], 0, 150);
-
-        $checkStmt = $conn->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
-        $checkStmt->bind_param("si", $newUsername, $userId);
-        $checkStmt->execute();
-        $checkResult = $checkStmt->get_result();
-
-        if (strlen($_POST['newDescription']) > 150) {
-            echo '<script>alert("Description must be 150 characters or less."); window.history.back();</script>';
-            exit();
-        }
+        $newDescription = substr($_POST['newDescription'], 0, 150); // Truncate description if too long
+        
         if (strlen($newUsername) < 3 || strlen($newUsername) > 20) {
-            echo '<script>alert("Username must be between 3 and 20 characters."); window.history.back();</script>';
-            exit();
-        }
-
-        if ($checkResult->num_rows > 0) {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Username already exists. Please choose a different one.");</script>';
+            echo '<script>alert("Username must be 3-20 characters");</script>';
+        } elseif (strlen($_POST['newDescription']) > 150) {
+            echo '<script>alert("Description max 150 characters");</script>';
         } else {
-            $stmt = $conn->prepare("UPDATE users SET username = ?, description = ? WHERE id = ?");
-            $stmt->bind_param("ssi", $newUsername, $newDescription, $userId);
-            $stmt->execute();
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Profile updated successfully!"); window.location.reload();</script>';
+            // Check if username already exists for another user
+            $checkStmt = $conn->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
+            $checkStmt->bind_param("si", $newUsername, $user_id);
+            $checkStmt->execute();
+            
+            if ($checkStmt->get_result()->num_rows > 0) {
+                echo '<script>alert("Username taken");</script>';
+            } else {
+                $stmt = $conn->prepare("UPDATE users SET username = ?, description = ? WHERE id = ?");
+                $stmt->bind_param("ssi", $newUsername, $newDescription, $user_id);
+                if ($stmt->execute()) {
+                    $_SESSION['username'] = $newUsername; // Update session username
+                    echo '<script>alert("Profile updated!"); window.location.reload();</script>';
+                } else {
+                    echo '<script>alert("Error updating profile");</script>';
+                    error_log("DB update error for profile edit: " . $stmt->error);
+                }
+            }
+            $checkStmt->close();
         }
-        $checkStmt->close();
+        $handled = true;
     }
-
-    // Delete Post
-    if (isset($_POST['delete_post_id'])) {
-        echo '<script>document.getElementById("upload-loader").style.display = "flex";</script>';
+    
+    // Delete post
+    if (!$handled && isset($_POST['delete_post_id'])) {
         $deletePostId = $_POST['delete_post_id'];
+        // Ensure only the owner can delete their post
         $stmt = $conn->prepare("DELETE FROM posts WHERE id = ? AND user_id = ?");
-        $stmt->bind_param("ii", $deletePostId, $userId);
-        $stmt->execute();
-
-        if ($stmt->affected_rows > 0) {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Post deleted successfully!"); window.location.href = window.location.href;</script>';
+        $stmt->bind_param("ii", $deletePostId, $user_id);
+        if ($stmt->execute() && $stmt->affected_rows > 0) {
+            echo '<script>alert("Post deleted!"); window.location.reload();</script>';
         } else {
-            echo '<script>document.getElementById("upload-loader").style.display = "none"; alert("Failed to delete post. Please try again.");</script>';
+            echo '<script>alert("Delete failed or post not found/owned");</script>';
+            error_log("DB delete error for post: " . $stmt->error);
         }
         $stmt->close();
+        $handled = true;
     }
-}
-
-// Fetch posts
-function getPosts($conn, $userId) {
-    $posts = [];
-    $stmt = $conn->prepare("SELECT p.id, p.photo_url, p.caption, u.username FROM posts p JOIN users u ON p.user_id = u.id WHERE p.user_id = ? ORDER BY p.created_at DESC");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $posts[] = $row;
+    
+    // If no specific POST action was handled, hide loader if it was shown
+    if (!$handled) {
+        echo '<script>document.getElementById("upload-loader").style.display = "none";</script>';
     }
-    $stmt->close();
-    return $posts;
 }
 
 // Fetch user data
-function getUserData($conn, $userId) {
-    $stmt = $conn->prepare("SELECT u.username, u.description, u.profile_photo, u.cover_photo, g.is_verified FROM users u LEFT JOIN goldentik g ON u.id = g.user_id WHERE u.id = ?");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+$userData = [];
+$stmt = $conn->prepare("SELECT u.username, u.description, u.profile_photo, u.cover_photo, g.is_verified 
+                        FROM users u 
+                        LEFT JOIN goldentik g ON u.id = g.user_id 
+                        WHERE u.id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows > 0) {
     $userData = $result->fetch_assoc();
-    $stmt->close();
-    return $userData;
 }
+$stmt->close();
 
-// Load user data and posts
-if (isset($_SESSION['user_id'])) {
-    $userData = getUserData($conn, $_SESSION['user_id']);
-    $posts = getPosts($conn, $_SESSION['user_id']);
-} else {
-    echo "Please log in to view your profile.";
-    exit();
+// Fetch posts
+$posts = [];
+$stmt = $conn->prepare("SELECT p.id, p.photo_url, p.caption, u.username 
+                        FROM posts p 
+                        JOIN users u ON p.user_id = u.id 
+                        WHERE p.user_id = ? 
+                        ORDER BY p.created_at DESC");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $posts[] = $row;
 }
+$stmt->close();
+
+$conn->close(); // Close the database connection
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-      <link rel="icon" type="image/avif" href="icon.avif">
+    <link rel="icon" type="image/avif" href="icon.avif">
     <title>PicShot</title>
     <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="prof.css">
-<link rel="stylesheet" href="sidebar.css">  
- <link rel="stylesheet" href="post.css" />
-
+    <link rel="stylesheet" href="prof.css">
+    <link rel="stylesheet" href="sidebar.css">  
+    <link rel="stylesheet" href="post.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-   
-<style>
-.sidebg #sidebar button.an-btn {
+    <style>
+       .sidebg #sidebar button.an-btn {
     color: black !important;
     background-color: white !important;
 }
@@ -368,7 +397,8 @@ if (isset($_SESSION['user_id'])) {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-</style>
+
+    </style>
 </head>
 <body>
 
@@ -378,76 +408,74 @@ if (isset($_SESSION['user_id'])) {
     <center>
         <div class="profile-wrapper">
            <div class="uppertop" id="coverContainer">
-    <img src="<?=$userData['cover_photo'] ?? 'topimage.jpg'?>" alt="Cover Image" id="coverPhoto" style="cursor: pointer;">
-</div>
+                <img src="<?= htmlspecialchars($userData['cover_photo'] ?? 'topimage.jpg') ?>" alt="Cover Image" id="coverPhoto">
+            </div>
 
-<div class="edit-cover" id="editCover">
-    <input type="file" id="coverInput" name="coverInput" accept="image/*" style="display: none;">
-</div>
+            <div class="edit-cover" id="editCover">
+                <!-- The input is hidden and triggered by clicking the image -->
+                <input type="file" id="coverInput" name="coverInput" accept="image/*" style="display: none;">
+            </div>
 
             <div class="profilepic">
-                <img src="<?=$userData['profile_photo'] ?? 'profile.jpg'?>" alt="Profile" id="profilePhoto" style="cursor: pointer;">
+                <img src="<?= htmlspecialchars($userData['profile_photo'] ?? 'profile.jpg') ?>" alt="Profile" id="profilePhoto">
+                <!-- The input is hidden and triggered by clicking the image -->
                 <input type="file" id="profilePicInput" name="profilePhoto" accept="image/*" style="display: none;">
             </div>
 
             <div class="profile-name">
                 <div class="username-line">
-                    <span class="username"><?=$userData['username'] ?? 'Username'?></span>
+                    <span class="username"><?= htmlspecialchars($userData['username'] ?? 'Username') ?></span>
                     <?php if (!empty($userData['is_verified'])): ?>
                         <img src="vf.png" alt="verified" class="verified-icon" />
                     <?php endif; ?>
                 </div>
-                <span class="desc"><?=$userData['description'] ?? 'Description'?></span>
+                <span class="desc"><?= htmlspecialchars($userData['description'] ?? 'Description') ?></span>
                 <button onclick="openEditModal()" class="editp an-btn">Edit Profile</button>
             </div>
         </div>
     </center>
-    <div class="edit-cover" id="editCover">
-        <label for="coverInput" style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-            <img src="image.png" alt="" style="width: 24px; height: 24px;"> Edit Cover
-        </label>
-        <input type="file" id="coverInput" name="coverInput" accept="image/*" style="display: none;">
-    </div>
-
+    
+    <!-- Edit Profile Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <span onclick="closeEditModal()">&times;</span>
             <h2>Edit Profile</h2>
             <form method="POST">
                 <label for="newUsername">New Username:</label>
-                <input type="text" name="newUsername" id="newUsername" value="<?=$userData['username']?>" required><br><br>
+                <input type="text" name="newUsername" id="newUsername" value="<?= htmlspecialchars($userData['username'] ?? '') ?>" required><br><br>
                 <label for="newDescription">New Description:</label>
-                <textarea name="newDescription" id="newDescription" required><?=$userData['description']?></textarea><br><br>
+                <textarea name="newDescription" id="newDescription" required><?= htmlspecialchars($userData['description'] ?? '') ?></textarea><br><br>
                 <button type="submit" name="editUsernameSubmit" class="editUsernameSubmit">Save Changes</button>
             </form>
         </div>
     </div>
 
-    <div class="add-post-section"  id="uploadBox" style="display: none;">
+    <!-- Add New Post Section -->
+    <div class="add-post-section" id="uploadBox" style="display: none;">
         <div class="container">
             <h2>Create New Post</h2>
             <div class="form-container">
-                <div class="upload-box" onclick="fileInput.click()">
-                    <img id="previewImg" alt="" style="max-width: 100%; display: none;" />
-                    <p id="placeholder">Choose a file to upload</p>
-                    <input type="file" id="fileInput" style="display:none;" hidden onchange="handleImageUpload(event)">
-                </div>
+                <form id="postForm" method="POST" enctype="multipart/form-data">
+                    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                        <img id="previewImg" alt="" style="max-width: 100%; display: none;" />
+                        <p id="placeholder">Choose a file to upload</p>
+                        <input type="file" id="fileInput" name="imageInput" style="display:none;" onchange="handleImageUpload(event)">
+                    </div>
 
-                <div class="form-fields">
-                    <label>Title</label>
-                    <input type="text" id="title" placeholder="Title will appear here" readonly />
-                    <label>Description</label>
-                    <textarea id="description" placeholder="Enter the description"></textarea>
-                    <button onclick="submitPost()" style="margin-top: 20px; padding: 10px 20px; border: none; border-radius: 10px; background: linear-gradient(to right, #3b5323, #ffa500); color: white; font-size: 16px; cursor: pointer;">Post</button>
-                </div>
+                    <div class="form-fields">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="descInput" placeholder="Enter the description"></textarea>
+                        <button type="submit" class="post-button">Post</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
+    <!-- User Posts Grid -->
     <div class="post-grid-box" id="postGrid">
         <ul class="nav-posts an-btn">
-           <!-- <li><button onclick="toggleUpload()">Post</button></li> -->
-            <li><button>Post</button></li>
+            <li><button onclick="toggleUpload()">Post</button></li>
         </ul>
 
         <?php foreach ($posts as $post): ?>
@@ -456,8 +484,7 @@ if (isset($_SESSION['user_id'])) {
                 <div class="post-overlay">
                     <div class="post-desc"><?= htmlspecialchars($post['caption'] ?? 'No Caption') ?></div>
                     <div class="post-username">@<?= htmlspecialchars($post['username']) ?></div>
-
-                    <form method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                    <form method="post" onsubmit="return confirm('Delete this post?');">
                         <input type="hidden" name="delete_post_id" value="<?= $post['id'] ?>">
                         <button type="submit" class="delete-button">
                             <i class="fas fa-trash"></i>
@@ -468,10 +495,12 @@ if (isset($_SESSION['user_id'])) {
         <?php endforeach; ?>
     </div>
 
+    <!-- Loading Overlay for AJAX calls -->
     <div id="loadingOverlay">
         <div class="spinner"></div>
     </div>
 
+    <!-- Post Detail Modal -->
     <div id="postModal" style="display: none;">
         <div id="postModalContent">
             <button class="close-btn" onclick="closePostModal()">
@@ -481,6 +510,7 @@ if (isset($_SESSION['user_id'])) {
     </div>
 </div>
 
+<!-- Fullscreen Image Modal -->
 <div id="fullscreenModal" class="fullscreen-modal" onclick="closeFullscreen()">
     <span class="close-fullscreen">&times;</span>
     <div class="fullscreen-modal-content">
@@ -489,241 +519,244 @@ if (isset($_SESSION['user_id'])) {
     </div>
 </div>
 
+<!-- Floating Plus Button to Toggle Upload Box -->
 <button class="plus-button" onclick="toggleUpload()">+</button>
 <div id="upload-loader" style="display: none;">
     <div class="spinner"></div>
 </div>
 
 <script>
-// Make the cover photo clickable
-document.getElementById('coverContainer').addEventListener('click', function() {
+// Profile photo click to change: Triggers the hidden file input
+document.getElementById('profilePhoto').addEventListener('click', function() {
+    document.getElementById('profilePicInput').click();
+});
+
+// Cover photo click to change: Triggers the hidden file input
+document.getElementById('coverPhoto').addEventListener('click', function() {
     document.getElementById('coverInput').click();
 });
 
-// Handle the file input change
-document.getElementById('coverInput').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('coverPhoto').src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
+// Event listener for profile photo input change
+document.getElementById('profilePicInput').addEventListener('change', function() {
+    showLoader(); // Show loading spinner
+    // Call uploadFile with the input element and 'profile' type
+    uploadFile(this, 'profile'); 
 });
 
-function toggleUpload() {
-    const uploadBox = document.getElementById("uploadBox");
-    uploadBox.style.display = uploadBox.style.display === "none" ? "block" : "none";
+// Event listener for cover photo input change
+document.getElementById('coverInput').addEventListener('change', function() {
+    showLoader(); // Show loading spinner
+    // Call uploadFile with the input element and 'cover' type
+    uploadFile(this, 'cover');
+});
+
+/**
+ * Handles the file upload to the server via Fetch API.
+ * @param {HTMLInputElement} input - The file input element.
+ * @param {string} type - The type of upload ('profile' or 'cover').
+ */
+function uploadFile(input, type) {
+    const formData = new FormData();
+    // Append the file to FormData with the correct name attribute
+    // that the PHP script expects ($_FILES['profilePhoto'] or $_FILES['coverInput'])
+    if (type === 'profile') {
+        formData.append('profilePhoto', input.files[0]);
+    } else if (type === 'cover') {
+        formData.append('coverInput', input.files[0]);
+    } else {
+        console.error('Unknown upload type:', type);
+        hideLoader();
+        return;
+    }
+    
+    fetch('', { // Sending to the same PHP script
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text()) // Get response as text (PHP echoes <script> tags)
+    .then(data => {
+        hideLoader(); // Hide loading spinner
+        // Execute the script returned by PHP (e.g., alert and reload)
+        // This is a common pattern in older PHP applications, but for modern
+        // apps, consider returning JSON and handling success/error messages in JS.
+        try {
+            // Create a temporary div to parse the HTML/script from the response
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            const scriptTags = tempDiv.getElementsByTagName('script');
+            for (let i = 0; i < scriptTags.length; i++) {
+                eval(scriptTags[i].innerHTML); // Execute the script
+            }
+        } catch (e) {
+            console.error('Error executing PHP response script:', e, data);
+            alert('An unexpected error occurred after upload. Please check console.');
+        }
+    })
+    .catch(error => {
+        console.error('Fetch Error:', error);
+        alert('Upload failed: ' + error.message);
+        hideLoader(); // Ensure loader is hidden on error
+    });
 }
 
-// Profile picture upload logic
-const profileImage = document.getElementById('profilePhoto');
-const profileInput = document.getElementById('profilePicInput');
-
-profileImage.addEventListener('click', () => {
-    profileInput.click();
-});
-
-profileInput.addEventListener('change', function () {
-    const file = this.files[0];
-    if (!file) return;
+/**
+ * Handles the image preview for the new post upload section.
+ * @param {Event} event - The change event from the file input.
+ */
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file || !file.type.startsWith('image/')) {
+        // If no file or not an image, reset preview
+        document.getElementById('previewImg').style.display = 'none';
+        document.getElementById('placeholder').style.display = 'block';
+        return;
+    }
 
     const reader = new FileReader();
-    reader.onload = function (e) {
-        profileImage.src = e.target.result;
-        const formData = new FormData();
-        formData.append('profilePhoto', file);
-
-        document.getElementById('upload-loader').style.display = 'flex';
-        fetch('', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.text())
-        .then(data => {
-            console.log('Profile picture upload successful:', data);
-            profileImage.src = e.target.result;
-            document.getElementById('upload-loader').style.display = 'none';
-        })
-        .catch(error => {
-            console.error('Error uploading profile picture:', error);
-            alert('Failed to upload profile picture. Please try again.');
-            document.getElementById('upload-loader').style.display = 'none';
-        });
+    reader.onload = e => {
+        const previewImg = document.getElementById('previewImg');
+        previewImg.src = e.target.result;
+        previewImg.style.display = 'block';
+        document.getElementById('placeholder').style.display = 'none';
     };
     reader.readAsDataURL(file);
-});
-
-// Edit profile modal open/close
-function openEditModal() {
-    document.getElementById("editModal").style.display = "block";
 }
 
-function closeEditModal() {
-    document.getElementById("editModal").style.display = "none";
-}
-
-window.onclick = function(event) {
-    const modal = document.getElementById("editModal");
-    if (event.target == modal) {
-        modal.style.display = "none";
-    }
-}
-
-// Post modal functionality
+/**
+ * Opens the post detail modal and fetches post content.
+ * @param {number} postId - The ID of the post to display.
+ */
 function openPostModal(postId) {
     const modal = document.getElementById('postModal');
     const content = document.getElementById('postModalContent');
     const loader = document.getElementById('loadingOverlay');
 
-    modal.onclick = function(event) {
-        if (event.target === modal) {
-            closePostModal();
-        }
-    };
+    modal.style.display = 'block';
+    loader.style.display = 'flex'; // Show loading overlay
 
-    loader.classList.add('active');
+    // Fetch post details from photovs.php
+    fetch('photovs.php?post_id=' + postId)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.text();
+        })
+        .then(data => {
+            // Parse the response to extract the relevant post content
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data, 'text/html');
+            const innerContent = doc.querySelector('.outer-card'); // Assuming photovs.php returns content within .outer-card
 
-    fetch('photovs.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'post_id=' + postId
-    })
-    .then(response => response.text())
-    .then(data => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data, 'text/html');
-        const innerContent = doc.querySelector('.outer-card');
-
-        if (innerContent) {
-            content.innerHTML = `
-                <button class="close-btn" onclick="closePostModal()">X</button>
-                ${innerContent.outerHTML}
-            `;
-            modal.style.display = 'block';
-        } else {
-            alert('Post content not found.');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to load post.');
-    })
-    .finally(() => {
-        loader.classList.remove('active');
-    });
+            if (innerContent) {
+                // Set the modal content and add the close button
+                content.innerHTML = `
+                    <button class="close-btn" onclick="closePostModal()"><i class="fa-solid fa-x"></i></button>
+                    ${innerContent.outerHTML}
+                `;
+                modal.style.display = 'block';
+                
+                // Add click functionality to images within the modal for fullscreen view
+                const images = content.querySelectorAll('img');
+                images.forEach(img => {
+                    img.onclick = function() {
+                        document.getElementById('fullscreenImage').src = this.src;
+                        document.getElementById('fullscreenCaption').textContent = this.alt;
+                        document.getElementById('fullscreenModal').style.display = 'block';
+                    };
+                });
+            } else {
+                alert('Post content not found or invalid response from server.');
+                console.error('Invalid response from photovs.php:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching post:', error);
+            alert('Failed to load post. Please try again.');
+        })
+        .finally(() => {
+            loader.style.display = 'none'; // Hide loading overlay regardless of success/failure
+        });
 }
 
+/**
+ * Closes the post detail modal and resets its content.
+ */
 function closePostModal() {
     const modal = document.getElementById('postModal');
     const content = document.getElementById('postModalContent');
     modal.style.display = 'none';
-    content.innerHTML = `<button class="close-btn" onclick="closePostModal()">X</button>`;
+    // Reset content to just the close button to prevent old content from flashing
+    content.innerHTML = `<button class="close-btn" onclick="closePostModal()"><i class="fa-solid fa-x"></i></button>`;
 }
 
-// Image upload and posting functionality
-const IMGBB_API_KEY = "8f23d9f5d1b5960647ba5942af8a1523";
-const IMAGGA_KEY    = "acc_7300facc9d3b521";
-const IMAGGA_SECRET = "f127d8a250041a77a10d8c1e2ad78ccc";
-
-const loader     = document.getElementById('loader');
-const fileInput  = document.getElementById('fileInput');
-const previewImg = document.getElementById('previewImg');
-const placeholder= document.getElementById('placeholder');
-let latestImageUrl = "";
-
-function handleImageUpload(event) {
-    const file = event.target.files[0];
-    if (!file || !file.type.startsWith('image/')) return;
-
-    const reader = new FileReader();
-    reader.onload = e => {
-        previewImg.src = e.target.result;
-        previewImg.style.display = 'block';
-        placeholder.style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-
-    uploadToImgbb(file);
+/**
+ * Closes the fullscreen image modal.
+ */
+function closeFullscreen() {
+    document.getElementById('fullscreenModal').style.display = 'none';
 }
 
-async function uploadToImgbb(file) {
-    loader.style.display = 'flex';
-    const formData = new FormData();
-    formData.append("image", file);
-    try {
-        const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-            method: "POST", body: formData
-        });
-        const data = await res.json();
-        latestImageUrl = data.data.url;
-        await getTagsFromImagga(latestImageUrl);
-    } catch (err) {
-        console.error("Upload to imgbb failed:", err);
-    } finally {
-        loader.style.display = 'none';
+/**
+ * Shows the global upload loader.
+ */
+function showLoader() {
+    document.getElementById('upload-loader').style.display = 'flex';
+}
+
+/**
+ * Hides the global upload loader.
+ */
+function hideLoader() {
+    document.getElementById('upload-loader').style.display = 'none';
+}
+
+/**
+ * Toggles the visibility of the new post upload box.
+ */
+function toggleUpload() {
+    const uploadBox = document.getElementById("uploadBox");
+    uploadBox.style.display = uploadBox.style.display === "none" ? "block" : "none";
+    // Reset preview when toggling off
+    if (uploadBox.style.display === "none") {
+        document.getElementById('previewImg').src = '';
+        document.getElementById('previewImg').style.display = 'none';
+        document.getElementById('placeholder').style.display = 'block';
+        document.getElementById('fileInput').value = ''; // Clear selected file
+        document.getElementById('description').value = ''; // Clear description
     }
 }
 
-async function getTagsFromImagga(imageUrl) {
-    loader.style.display = 'flex';
-    const auth = btoa(IMAGGA_KEY + ":" + IMAGGA_SECRET);
-    try {
-        const res    = await fetch(`https://api.imagga.com/v2/tags?image_url=${encodeURIComponent(imageUrl)}`, {
-            headers: { "Authorization": "Basic " + auth }
-        });
-        const result = await res.json();
-        if (result.result && result.result.tags) {
-            const tags = result.result.tags
-                .filter(t => t.confidence > 50)
-                .map(t => t.tag.en);
-            document.getElementById("title").value = tags.join(", ") || "No title found";
-        }
-    } catch (err) {
-        console.error("Imagga error:", err);
-    } finally {
-        loader.style.display = 'none';
-    }
+/**
+ * Opens the edit profile modal.
+ */
+function openEditModal() {
+    document.getElementById("editModal").style.display = "flex"; // Use flex for centering
 }
 
-function submitPost() {
-    const title       = document.getElementById('title').value;
-    const description = document.getElementById('description').value;
-    const imageUrl    = latestImageUrl;
+/**
+ * Closes the edit profile modal.
+ */
+function closeEditModal() {
+    document.getElementById("editModal").style.display = "none";
+}
 
-    if (!title || !description || !imageUrl) {
-        alert("Please complete all fields and wait for upload/tagging.");
-        return;
+// Close modals when clicking outside of their content
+window.onclick = function(event) {
+    const editModal = document.getElementById("editModal");
+    if (event.target == editModal) {
+        closeEditModal();
     }
-
-    loader.style.display = 'flex';
-    fetch("", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-            title: title,
-            description: description,
-            imageUrl: imageUrl
-        })
-    })
-    .then(res => res.text())
-    .then(text => {
-        loader.style.display = 'none';
-        if (text === "SUCCESS") {
-            document.getElementById("uploadBox").style.display = "none";
-            alert("Post uploaded successfully!");
-            window.location.reload();
-        } else {
-            alert("Error: " + text);
-        }
-    })
-    .catch(err => {
-        loader.style.display = 'none';
-        console.error("DB insert error:", err);
-    });
+    
+    const postModal = document.getElementById("postModal");
+    if (event.target == postModal) {
+        closePostModal();
+    }
+    
+    const fullscreenModal = document.getElementById("fullscreenModal");
+    if (event.target == fullscreenModal) {
+        closeFullscreen();
+    }
 }
 </script>
 </body>

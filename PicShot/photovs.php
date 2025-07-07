@@ -68,7 +68,7 @@ $comments = $stmt_c->get_result();
   <title>Post Detail</title>
     <link rel="icon" type="image/avif" href="icon.avif">
   <style>
-    /* Tumhara existing CSS yahin paste kar do */
+
     *{box-sizing:border-box;}
     body{margin:0;font-family:'Poppins',sans-serif;background:#eaeaea;color:#333;padding:40px 10px;}
     .outer-card{position:relative;max-width:1100px;margin:auto;background:#fff;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,0.1);padding:30px;}
@@ -80,8 +80,8 @@ $comments = $stmt_c->get_result();
     .username{color:#666;font-size:14px;margin:8px 0;}
     .description{font-size:16px;margin-top:12px;color:#444;}
       .comment-box {
-        position: absolute; /* ✅ correct spelling */
-  bottom: 40px;
+      position: absolute; 
+      bottom: 40px;
       display: flex;
       margin-top: 24px;
       gap: 10px;

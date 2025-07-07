@@ -257,33 +257,47 @@ if (!isset($_SESSION['extracted_data'])) {
     ];
 }
 
+// Handle incoming messages
 if (isset($_POST['message'])) {
     $message = $_POST['message'];
 
+    // Add user's message to session history
     $_SESSION['chat_history'][] = ["role" => "user", "content" => $message];
 
+    // --- Data Extraction Logic ---
+    // Extract Name
     if (preg_match('/(?:my name is|i am|i\'m)\s+([a-zA-Z\s.-]+)/i', $message, $matches)) {
+        // Simple extraction: take the first captured group
         $_SESSION['extracted_data']['name'] = trim($matches[1]);
     }
+    // Extract Email
     if (preg_match('/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/i', $message, $matches)) {
         $_SESSION['extracted_data']['email'] = $matches[0];
     }
-     if (preg_match('/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/', $message, $matches)) {
+    // Extract Phone Number (simple example, customize for Indian formats if needed)
+    if (preg_match('/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/', $message, $matches)) {
         $_SESSION['extracted_data']['phone_number'] = $matches[0];
     }
+    // Extract Problem Description (more complex, consider using AI for better parsing)
+    // For now, a very basic example: if "problem" or "issue" is mentioned, capture the rest of the sentence.
     if (preg_match('/(?:my problem is|i have an issue with|i\'m having trouble with)\s+(.+)/i', $message, $matches)) {
         if (empty($_SESSION['extracted_data']['problem_description'])) { // Only store if not already set
             $_SESSION['extracted_data']['problem_description'] = trim($matches[1]);
         }
     }
-   
+    // You can add more specific regexes and logic here for other data points
 
-     $messages_for_api = [];
+
+    // --- Logic to create limited history for API call ---
+    $messages_for_api = [];
     
-     if (!empty($_SESSION['chat_history']) && $_SESSION['chat_history'][0]['role'] === 'system') {
+    // Always include the system message at the beginning
+    if (!empty($_SESSION['chat_history']) && $_SESSION['chat_history'][0]['role'] === 'system') {
         $messages_for_api[] = $_SESSION['chat_history'][0];
     }
 
+    // Optionally, add extracted data to the API messages to inform the AI
+    // This is useful if you want the AI to remember the name, problem, etc., even if it's not in the last two messages.
     $extracted_info_for_ai = '';
     if (!empty($_SESSION['extracted_data']['name'])) {
         $extracted_info_for_ai .= "The user's name is " . $_SESSION['extracted_data']['name'] . ". ";
@@ -299,7 +313,13 @@ if (isset($_POST['message'])) {
     }
 
     if (!empty($extracted_info_for_ai)) {
-          $messages_for_api[] = ["role" => "user", "content" => "Previously provided context: " . trim($extracted_info_for_ai)];
+        // Prepend this extracted info to the user's current message, or add as a separate "user" role if the AI understands it.
+        // For simplicity, we can add it as an additional "user" message or modify the last user message.
+        // A better approach might be to add it to the *system* prompt if it's persistent context for the AI.
+        // For now, let's add it as a new "user" message right before the actual last user message.
+        // This makes it clear to the AI that this is relevant user-provided info.
+        // You might need to adjust the AI's system prompt to handle this kind of context if it's not already aware.
+        $messages_for_api[] = ["role" => "user", "content" => "Previously provided context: " . trim($extracted_info_for_ai)];
     }
 
 
@@ -316,43 +336,22 @@ if (isset($_POST['message'])) {
 
     // Send message to the AI API with the limited history and extracted data
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://free.v36.cm/v1/chat/completions");
+    curl_setopt($ch, CURLOPT_URL, "https://api.chatanywhere.tech/v1/chat/completions");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_POST, 1);
-   $json_payload = json_encode([
-    "model" => "gpt-3.5-turbo",
-    "messages" => $messages_for_api
-]);
-error_log("Sending to AI API: " . $json_payload);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $json_payload);
-
-
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        "model" => "gpt-3.5-turbo",
+        "messages" => $messages_for_api // Use the filtered and limited history here
+    ]));
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Authorization: Bearer sk-eluKpDvAcZmFtv1W5034Ec4fA90248Dc80EcBdD9Bc029147",
+        "Authorization: Bearer sk-rwiv9ScxjbbgKWzxe07mcKMGqBOYYerGnXhXdrzgrA1NWsak",
         "Content-Type: application/json"
     ]);
     $response = curl_exec($ch);
-    
-    // --- Start of added error handling ---
-    if (curl_errno($ch)) {
-        $assistantMessage = "Error connecting to the AI service: " . curl_error($ch);
-        error_log($assistantMessage); // Log the error
-    } else {
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $data = json_decode($response, true);
-
-        if ($http_code !== 200) {
-            $assistantMessage = "Error from AI service (HTTP " . $http_code . "): " . (isset($data['error']['message']) ? $data['error']['message'] : $response);
-            error_log($assistantMessage); // Log the error
-        } elseif (isset($data['choices'][0]['message']['content'])) {
-            $assistantMessage = $data['choices'][0]['message']['content'];
-        } else {
-            $assistantMessage = "Unexpected response from AI service. Please try again.";
-            error_log("Unexpected AI response: " . $response); // Log the unexpected response
-        }
-    }
     curl_close($ch);
-    // --- End of added error handling ---
+
+    $data = json_decode($response, true);
+    $assistantMessage = $data['choices'][0]['message']['content'];
 
     // Add assistant's response to the full session history (for display purposes)
     $_SESSION['chat_history'][] = ["role" => "assistant", "content" => $assistantMessage];
