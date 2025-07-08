@@ -493,7 +493,7 @@ ob_end_flush(); // End output buffering for the main page load
                 </div>
                 <span class="desc"><?= htmlspecialchars($userData['description'] ?? 'Description') ?></span>
                 <?php if (!$isOwnProfile): ?>
-                    <button onclick="follow()" class="follow-button">Follow</button>
+                    <button style="display:none;" onclick="follow()" class="follow-button">Follow</button>
                     <button class="contact-button" value="<?= htmlspecialchars($userData['username'] ?? '') ?>">Contact</button>
                 <?php endif; ?>
             </div>

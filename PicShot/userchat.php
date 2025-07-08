@@ -8,10 +8,10 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Database Connection
-$servername = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com"; 
-$username = "admin"; 
-$password = "DBpicshot"; 
-$dbname = "Photostore"; 
+$servername = "database-1.cav0my0c6v1m.us-east-1.rds.amazonaws.com";
+$username = "admin";
+$password = "DBpicshot";
+$dbname = "Photostore";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
@@ -29,12 +29,12 @@ function getUserInfoByUsername($conn, $username) {
     $result = $stmt->get_result();
     $userInfo = $result->fetch_assoc();
     $stmt->close();
-    
+
     // Set default profile photo if not set
     if (!empty($userInfo)) {
         $userInfo['profile_photo'] = !empty($userInfo['profile_photo']) ? $userInfo['profile_photo'] : 'profile.jpg';
     }
-    
+
     return $userInfo;
 }
 
@@ -70,7 +70,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_users') {
         }
         $stmt->close();
     }
-    
+
     header('Content-Type: application/json');
     echo json_encode($users);
     exit;
@@ -86,12 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_username'], 
         $receiverInfo = getUserInfoByUsername($conn, $receiverUsername);
         if ($receiverInfo) {
             $receiverId = $receiverInfo['id'];
-            
+
             // Insert message with Indian/Kolkata time
-            $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, message, sent_at) 
+            $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, message, sent_at)
                                    VALUES (?, ?, ?, CONVERT_TZ(NOW(), 'SYSTEM', 'Asia/Kolkata'))");
             $stmt->bind_param("iis", $senderId, $receiverId, $message);
-            
+
             if ($stmt->execute()) {
                 echo json_encode(['success' => true, 'sent_message' => htmlspecialchars($message)]);
             } else {
@@ -119,7 +119,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
     }
 
     $otherUserId = $otherUserInfo['id'];
-    
+
     // Fetch messages with Indian/Kolkata time
     $stmt = $conn->prepare("SELECT m.*, u1.profile_photo AS sender_photo
                            FROM messages m
@@ -138,13 +138,13 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
         foreach ($messages as $message) {
             $isMe = ($message['sender_id'] == $loggedInUserId);
             $messageClass = $isMe ? 'sent-message' : 'received-message';
-            
+
             // Use profile.jpg as default if no photo is set
             $photoUrl = !empty($message['sender_photo']) ? htmlspecialchars($message['sender_photo']) : 'profile.jpg';
-            
+
             // Format time in Indian/Kolkata timezone
             $sentTime = date('H:i', strtotime($message['sent_at']));
-            
+
             $output .= "<div class='message-container $messageClass'>";
             if ($isMe) {
                 $output .= "<img src='$photoUrl' alt='Profile' class='profile-photo'>";
@@ -175,6 +175,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="chat-style.css">
+    
 </head>
 <body>
     <div class="wrap">
@@ -304,7 +305,7 @@ if (isset($_GET['messages_only'], $_GET['username'])) {
         function fetchMessages() {
             const username = receiverUsernameInput.value;
             if (!username) return;
-            
+
             fetch(`?messages_only=1&username=${encodeURIComponent(username)}`)
                 .then(response => response.text())
                 .then(html => {

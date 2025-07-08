@@ -156,7 +156,7 @@
         .user-item {
             display: flex;
             align-items: center;
-            padding: 12px 15px;
+            padding: 32px 15px;
             border-radius: var(--border-radius-md); /* More circular */
             color: var(--text-dark);
             text-decoration: none;
