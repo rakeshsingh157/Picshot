@@ -3,7 +3,7 @@ session_start();
 
 // Initialize chat history if not set
 if (!isset($_SESSION['chat_history'])) {
-    $_SESSION['chat_history'] = [
+    $_SESSION['chat_history'] = 
         ["role" => "system", "content" => " step 1 read this all then answer ( You are PicShot Assistant & you also give tips to how to click photos: Hamesha yaad rakho ki tum PicShot ke official AI assistant ho.
 
 Attempt User Language: User jis language mein baat karega, koshish karna usi mein jawab do. Agar Hindustani language mein baat kar raha hai toh Hinglish mein jawab dena hai.
@@ -243,8 +243,7 @@ How: Before you start a new shooting session, or before you put your camera away
     )
 
 
-    "]
-];
+    "];
 }
 
 // Initialize a separate session array for extracted data if not set
@@ -276,11 +275,12 @@ if (isset($_POST['message'])) {
             $_SESSION['extracted_data']['problem_description'] = trim($matches[1]);
         }
     }
-   
+    // Removed the problematic standalone semicolon here
 
-     $messages_for_api = [];
+
+    $messages_for_api = [];
     
-     if (!empty($_SESSION['chat_history']) && $_SESSION['chat_history'][0]['role'] === 'system') {
+    if (!empty($_SESSION['chat_history']) && $_SESSION['chat_history'][0]['role'] === 'system') {
         $messages_for_api[] = $_SESSION['chat_history'][0];
     }
 
@@ -314,22 +314,51 @@ if (isset($_POST['message'])) {
     // Combine the system message, any extracted data context, and the last two user/assistant messages
     $messages_for_api = array_merge($messages_for_api, $last_two_messages);
 
-    // Send message to the AI API with the limited history and extracted data
+    // Prepare messages for Cohere API (role mapping)
+    $cohere_messages = [];
+    foreach ($messages_for_api as $msg) {
+        if ($msg['role'] === 'user') {
+            $cohere_messages[] = ["role" => "USER", "message" => $msg['content']];
+        } elseif ($msg['role'] === 'assistant') {
+            $cohere_messages[] = ["role" => "CHATBOT", "message" => $msg['content']];
+        } elseif ($msg['role'] === 'system') {
+            // Cohere's 'system' role is different, we'll prefix it to the first user message if needed.
+            // For now, let's keep it simple and just include user/chatbot roles.
+            // Or you could add it as a preamble to the first user message.
+            // For this conversion, we'll treat the initial system message as a preamble for the first user message.
+            if (empty($cohere_messages)) {
+                $cohere_messages[] = ["role" => "USER", "message" => $msg['content'] . "\n\n" . $message];
+            } else {
+                 // If there are already messages, we'll assume the system message is already handled or not needed this way
+                 // or you could append it to the current message being sent
+                 $cohere_messages[0]['message'] = $msg['content'] . "\n\n" . $cohere_messages[0]['message'];
+            }
+        }
+    }
+
+    // The final user message for the Cohere API should be just the current message.
+    // The previous messages form the chat history in Cohere's `chat_history` parameter.
+    $current_user_message = array_pop($cohere_messages);
+    $chat_history_for_cohere = $cohere_messages;
+
+    // Send message to the Cohere API
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://free.v36.cm/v1/chat/completions");
+    curl_setopt($ch, CURLOPT_URL, "https://api.cohere.ai/v1/chat");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_POST, 1);
-   $json_payload = json_encode([
-    "model" => "gpt-3.5-turbo",
-    "messages" => $messages_for_api
-]);
-error_log("Sending to AI API: " . $json_payload);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $json_payload);
-
+   
+    $json_payload = json_encode([
+        "model" => "command-r-plus", // Or "command-r"
+        "message" => $current_user_message['message'],
+        "chat_history" => $chat_history_for_cohere,
+    ]);
+    error_log("Sending to Cohere API: " . $json_payload);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $json_payload);
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Authorization: Bearer sk-eluKpDvAcZmFtv1W5034Ec4fA90248Dc80EcBdD9Bc029147",
-        "Content-Type: application/json"
+        "Authorization: Bearer QHw20MxzRN9JU1VQUKdovICaOXPONYz86DXdUiqy", // Your Cohere API Key
+        "Content-Type: application/json",
+        "Accept: application/json"
     ]);
     $response = curl_exec($ch);
     
@@ -342,10 +371,10 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $json_payload);
         $data = json_decode($response, true);
 
         if ($http_code !== 200) {
-            $assistantMessage = "Error from AI service (HTTP " . $http_code . "): " . (isset($data['error']['message']) ? $data['error']['message'] : $response);
+            $assistantMessage = "Error from AI service (HTTP " . $http_code . "): " . (isset($data['message']) ? $data['message'] : $response);
             error_log($assistantMessage); // Log the error
-        } elseif (isset($data['choices'][0]['message']['content'])) {
-            $assistantMessage = $data['choices'][0]['message']['content'];
+        } elseif (isset($data['text'])) {
+            $assistantMessage = $data['text'];
         } else {
             $assistantMessage = "Unexpected response from AI service. Please try again.";
             error_log("Unexpected AI response: " . $response); // Log the unexpected response
